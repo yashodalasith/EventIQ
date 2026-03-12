@@ -2,7 +2,9 @@ package com.eventiq.eventservice.controller;
 
 import com.eventiq.eventservice.dto.CreateEventRequest;
 import com.eventiq.eventservice.dto.UpdateEventRequest;
+import com.eventiq.eventservice.exception.ForbiddenException;
 import com.eventiq.eventservice.model.Event;
+import com.eventiq.eventservice.security.UserProfile;
 import com.eventiq.eventservice.service.AuthClient;
 import com.eventiq.eventservice.service.EventDomainService;
 import jakarta.validation.Valid;
@@ -10,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/events")
@@ -29,12 +30,12 @@ public class EventController {
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody CreateEventRequest request
     ) {
-        Map<String, Object> profile = authClient.fetchProfile(authorization);
-        String role = String.valueOf(profile.get("role"));
+        UserProfile profile = authClient.fetchProfile(authorization);
+        String role = profile.role();
         if (!("organizer".equals(role) || "admin".equals(role))) {
-            throw new IllegalArgumentException("Only organizer or admin can create events");
+            throw new ForbiddenException("Only organizer or admin can create events");
         }
-        return eventService.create(request, String.valueOf(profile.get("id")));
+        return eventService.create(request, profile);
     }
 
     @GetMapping
@@ -53,8 +54,8 @@ public class EventController {
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody UpdateEventRequest request
     ) {
-        authClient.fetchProfile(authorization);
-        return eventService.update(id, request);
+        UserProfile profile = authClient.fetchProfile(authorization);
+        return eventService.update(id, request, profile);
     }
 
     @PostMapping("/{id}/register")
@@ -62,12 +63,25 @@ public class EventController {
             @PathVariable String id,
             @RequestHeader("Authorization") String authorization
     ) {
-        Map<String, Object> profile = authClient.fetchProfile(authorization);
-        return eventService.register(id, String.valueOf(profile.get("id")));
+        UserProfile profile = authClient.fetchProfile(authorization);
+        return eventService.register(id, profile);
     }
 
-    @GetMapping("/health")
-    public Map<String, String> health() {
-        return Map.of("status", "ok", "service", "event");
+    @GetMapping("/mine")
+    public List<Event> listMyEvents(@RequestHeader("Authorization") String authorization) {
+        UserProfile profile = authClient.fetchProfile(authorization);
+        if (!("organizer".equals(profile.role()) || "admin".equals(profile.role()))) {
+            throw new ForbiddenException("Only organizer or admin can view owned events");
+        }
+        return eventService.listMine(profile);
+    }
+
+    @PostMapping("/{id}/publish")
+    public Event publishEvent(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String authorization
+    ) {
+        UserProfile profile = authClient.fetchProfile(authorization);
+        return eventService.publishEvent(id, profile);
     }
 }

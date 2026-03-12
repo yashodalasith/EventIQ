@@ -168,7 +168,13 @@ export default function ResourceAllocationPage() {
       return;
     }
     loadAllocations();
-  }, [token, canManageAllocations, role, allocationFilters.event_id, allocationFilters.status]);
+  }, [
+    token,
+    canManageAllocations,
+    role,
+    allocationFilters.event_id,
+    allocationFilters.status,
+  ]);
 
   const inventoryStats = useMemo(() => {
     const total = resources.length;
@@ -343,7 +349,10 @@ export default function ResourceAllocationPage() {
                   type="checkbox"
                   checked={resourceFilters.available_only}
                   onChange={(event) =>
-                    onResourceFilterChange("available_only", event.target.checked)
+                    onResourceFilterChange(
+                      "available_only",
+                      event.target.checked,
+                    )
                   }
                 />
                 Available only
@@ -356,7 +365,9 @@ export default function ResourceAllocationPage() {
 
           <div className="divide-y divide-slate-200">
             {loadingResources ? (
-              <div className="p-4 text-sm text-slate-500">Loading resources...</div>
+              <div className="p-4 text-sm text-slate-500">
+                Loading resources...
+              </div>
             ) : null}
 
             {!loadingResources && !resources.length ? (
@@ -413,7 +424,10 @@ export default function ResourceAllocationPage() {
                 Add resource
               </h2>
 
-              <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={onCreateResource}>
+              <form
+                className="mt-4 grid gap-3 sm:grid-cols-2"
+                onSubmit={onCreateResource}
+              >
                 <input
                   className="focus-field sm:col-span-2"
                   placeholder="Resource name"
@@ -496,8 +510,8 @@ export default function ResourceAllocationPage() {
 
             {!canManageAllocations ? (
               <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-700">
-                Participants can browse inventory. Allocation actions are available
-                to organizer and admin accounts.
+                Participants can browse inventory. Allocation actions are
+                available to organizer and admin accounts.
               </p>
             ) : (
               <form className="mt-4 grid gap-3" onSubmit={onCreateAllocation}>
@@ -654,7 +668,9 @@ export default function ResourceAllocationPage() {
                   }))
                 }
               >
-                <option value="">{role === "organizer" ? "Select your event" : "All events"}</option>
+                <option value="">
+                  {role === "organizer" ? "Select your event" : "All events"}
+                </option>
                 {events.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.title}
@@ -667,7 +683,9 @@ export default function ResourceAllocationPage() {
 
         <div className="divide-y divide-slate-200">
           {loadingAllocations ? (
-            <div className="p-4 text-sm text-slate-500">Loading allocations...</div>
+            <div className="p-4 text-sm text-slate-500">
+              Loading allocations...
+            </div>
           ) : null}
 
           {!loadingAllocations && !allocations.length ? (
@@ -696,7 +714,9 @@ export default function ResourceAllocationPage() {
                       {new Date(allocation.ends_at).toLocaleString()}
                     </p>
                     {allocation.notes ? (
-                      <p className="mt-1 text-sm text-slate-600">{allocation.notes}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {allocation.notes}
+                      </p>
                     ) : null}
                   </div>
 
@@ -706,7 +726,8 @@ export default function ResourceAllocationPage() {
                     >
                       {allocation.status}
                     </span>
-                    {allocation.status === "ALLOCATED" && canManageAllocations ? (
+                    {allocation.status === "ALLOCATED" &&
+                    canManageAllocations ? (
                       <NeonButton
                         variant="secondary"
                         onClick={() => onReleaseAllocation(allocation.id)}

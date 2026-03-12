@@ -8,7 +8,9 @@ const transport =
         host: env.smtpHost,
         port: env.smtpPort,
         secure: false,
-        auth: env.smtpUser ? { user: env.smtpUser, pass: env.smtpPass } : undefined,
+        auth: env.smtpUser
+          ? { user: env.smtpUser, pass: env.smtpPass }
+          : undefined,
       })
     : nodemailer.createTransport({ jsonTransport: true });
 

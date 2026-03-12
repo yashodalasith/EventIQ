@@ -25,8 +25,13 @@ export const createNotification = async (req, res) => {
     record.deliveryAttempts += 1;
     record.errorMessage = error.message;
     await record.save();
-    logger.error("Manual notification send failed", { message: error.message, recipient });
-    return res.status(502).json({ message: "Notification delivery failed", notification: record });
+    logger.error("Manual notification send failed", {
+      message: error.message,
+      recipient,
+    });
+    return res
+      .status(502)
+      .json({ message: "Notification delivery failed", notification: record });
   }
 
   return res.status(201).json(record);
@@ -48,6 +53,8 @@ export const listNotifications = async (req, res) => {
     filters.recipient = req.query.recipient;
   }
 
-  const rows = await Notification.find(filters).sort({ createdAt: -1 }).limit(limit);
+  const rows = await Notification.find(filters)
+    .sort({ createdAt: -1 })
+    .limit(limit);
   return res.json(rows);
 };

@@ -22,6 +22,11 @@ router.post(
   createNotification,
 );
 
-router.get("/notifications", requireAuth, requireRole("admin", "organizer"), listNotifications);
+router.get(
+  "/notifications",
+  requireAuth,
+  requireRole("admin", "organizer"),
+  listNotifications,
+);
 
 export default router;

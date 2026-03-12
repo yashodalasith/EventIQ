@@ -2,7 +2,10 @@ import { app } from "./app.js";
 import { connectDb } from "./config/db.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
-import { startKafkaConsumer, stopKafkaConsumer } from "./services/kafkaService.js";
+import {
+  startKafkaConsumer,
+  stopKafkaConsumer,
+} from "./services/kafkaService.js";
 
 let server;
 

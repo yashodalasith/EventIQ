@@ -9,7 +9,11 @@ const kafka = new Kafka({ brokers: env.kafkaBrokers });
 const consumer = kafka.consumer({ groupId: env.kafkaGroupId });
 let kafkaConnected = false;
 
-const topics = [env.eventCreatedTopic, env.eventRegistrationTopic, env.resourceAllocationTopic];
+const topics = [
+  env.eventCreatedTopic,
+  env.eventRegistrationTopic,
+  env.resourceAllocationTopic,
+];
 
 export const startKafkaConsumer = async () => {
   await consumer.connect();
@@ -53,7 +57,11 @@ export const startKafkaConsumer = async () => {
             record.deliveryAttempts += 1;
             record.errorMessage = error.message;
             await record.save();
-            logger.error("Kafka notification email delivery failed", { topic, message: error.message, payload });
+            logger.error("Kafka notification email delivery failed", {
+              topic,
+              message: error.message,
+              payload,
+            });
           }
         } else {
           record.errorMessage = "No recipient available for topic payload";

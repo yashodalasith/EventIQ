@@ -1,6 +1,6 @@
 # Frontend (EventIQ)
 
-React + Vite + Tailwind frontend for EventIQ with implemented Auth and Event Service workflows.
+React + Vite + Tailwind frontend for EventIQ with implemented Auth, Event Service, and Notification Service workflows.
 
 ## Prerequisites
 
@@ -27,11 +27,13 @@ React + Vite + Tailwind frontend for EventIQ with implemented Auth and Event Ser
 - Events listing with search, status filter, register action, publish action
 - Create Event form connected to Event Service create endpoint
 - My Registrations based on participant registration data
+- Notifications center with live delivery history, topic filters, operational metrics, and manual send form for organizer/admin roles
 
 ## Notes
 
-- Events endpoints are called through API Gateway and require a valid JWT.
-- Create and publish actions require organizer/admin roles.
+- Events and notifications endpoints are called through API Gateway and require a valid JWT.
+- Notification management and manual sends require organizer/admin roles.
+- `VITE_BYPASS_AUTH=true` keeps the notifications page in preview mode with sample data when no authenticated session is present.
 
 ## Build
 

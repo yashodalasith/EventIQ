@@ -1,78 +1,114 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GlassPanel from "../components/common/GlassPanel";
 import NeonButton from "../components/common/NeonButton";
 import SectionHeader from "../components/common/SectionHeader";
+import { useAuth } from "../context/AuthContext";
+import { createEvent } from "../lib/api";
 
 export default function CreateEventPage() {
+  const { token, user } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    location: "",
+    capacity: 100,
+    eventDate: ""
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const onChange = (event) => {
+    setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+  };
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    try {
+      await createEvent(token, {
+        title: form.title,
+        description: form.description,
+        location: form.location,
+        capacity: Number(form.capacity),
+        eventDate: new Date(form.eventDate).toISOString()
+      });
+      navigate("/events");
+    } catch (err) {
+      setError(err.message || "Failed to create event");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section>
       <SectionHeader
-        title="Launch Event"
-        subtitle="Structured creation flow for organizers"
+        title="Create Event"
+        subtitle="Create a new event in draft mode, then publish from the events page."
       />
-      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-3">
-        <GlassPanel className="p-5 2xl:col-span-2">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <input className="focus-field" placeholder="Event title" />
-            <input className="focus-field" placeholder="Date & Time" />
-            <input className="focus-field" placeholder="Venue / Online Link" />
-            <select className="focus-field">
-              <option>Event Type</option>
-              <option>Hackathon</option>
-              <option>Workshop</option>
-              <option>Conference</option>
-            </select>
-            <input className="focus-field" placeholder="Capacity" />
-            <input
-              className="focus-field"
-              placeholder="Registration Deadline"
-            />
-            <textarea
-              className="focus-field min-h-32 sm:col-span-2"
-              placeholder="Description"
-            />
-            <textarea
-              className="focus-field min-h-24 sm:col-span-2"
-              placeholder="Agenda highlights"
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <NeonButton>Publish Event</NeonButton>
-            <NeonButton className="border-accent-amber/70 bg-accent-amber/15 text-accent-amber">
-              Save Draft
-            </NeonButton>
-          </div>
-        </GlassPanel>
 
+      {user?.role !== "organizer" && user?.role !== "admin" ? (
         <GlassPanel className="p-5">
-          <p className="font-heading text-sm tracking-[0.2em] text-accent-lime">
-            Launch Checklist
-          </p>
-          <div className="mt-4 space-y-3 text-sm">
-            {[
-              "Event details validated",
-              "Organizer permission verified",
-              "Resource requests submitted",
-              "Email template selected",
-              "Visibility and registration configured",
-            ].map((item) => (
-              <label
-                key={item}
-                className="flex items-center gap-2 rounded-xl border border-base-line bg-base-bg/55 p-2.5"
-              >
-                <input type="checkbox" className="accent-accent-cyan" />
-                <span>{item}</span>
-              </label>
-            ))}
-          </div>
-          <div className="mt-4 rounded-xl border border-base-line bg-base-bg/55 p-3 text-sm text-base-text/80">
-            <p className="font-semibold text-base-text">Preview Mode</p>
-            <p className="mt-1">
-              Participants will see this event on the public listing after
-              publish.
-            </p>
-          </div>
+          <p className="text-sm text-slate-600">Only organizer or admin role can create events.</p>
         </GlassPanel>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <GlassPanel className="p-5 xl:col-span-2">
+            <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-sm text-slate-600">Title</label>
+                <input name="title" value={form.title} onChange={onChange} className="focus-field" placeholder="AI Workshop 2026" required />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-sm text-slate-600">Description</label>
+                <textarea name="description" value={form.description} onChange={onChange} className="focus-field min-h-28" placeholder="Describe the event goals, audience, and outcomes." required minLength={10} />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">Location</label>
+                <input name="location" value={form.location} onChange={onChange} className="focus-field" placeholder="Main Hall A" required />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">Capacity</label>
+                <input name="capacity" value={form.capacity} onChange={onChange} className="focus-field" type="number" min={1} max={100000} required />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-sm text-slate-600">Event Date</label>
+                <input name="eventDate" value={form.eventDate} onChange={onChange} className="focus-field" type="datetime-local" required />
+              </div>
+
+              {error ? <div className="sm:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+
+              <div className="sm:col-span-2 flex gap-2">
+                <NeonButton type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create Event"}</NeonButton>
+                <NeonButton type="button" variant="secondary" onClick={() => navigate("/events")}>Cancel</NeonButton>
+              </div>
+            </form>
+          </GlassPanel>
+
+          <GlassPanel className="p-5">
+            <h2 className="font-heading text-2xl text-slate-900">Validation Rules</h2>
+            <ul className="mt-3 space-y-2 text-sm text-slate-600">
+              <li>Title: 3 to 120 characters</li>
+              <li>Description: 10 to 2000 characters</li>
+              <li>Location: 2 to 120 characters</li>
+              <li>Capacity: 1 to 100000</li>
+              <li>Date must be in the future</li>
+            </ul>
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+              New events are created as DRAFT. Publish them later from the events list after review.
+            </div>
+          </GlassPanel>
+        </div>
+      )}
     </section>
   );
 }

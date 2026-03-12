@@ -7,10 +7,10 @@ export default function ResourceAllocationPage() {
     <section>
       <SectionHeader
         title="Resource Allocation"
-        subtitle="Map rooms and equipment to event operations"
+        subtitle="Resource module placeholder layout, ready for next service integration."
       />
-      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-5">
-        <GlassPanel className="p-5 2xl:col-span-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+        <GlassPanel className="p-5 xl:col-span-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <input className="focus-field" placeholder="Resource (Hall A)" />
             <input className="focus-field" placeholder="Quantity" />
@@ -22,18 +22,16 @@ export default function ResourceAllocationPage() {
             />
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <NeonButton>Allocate Resource</NeonButton>
-            <NeonButton className="border-accent-amber/70 bg-accent-amber/15 text-accent-amber">
+            <NeonButton variant="secondary">Allocate Resource</NeonButton>
+            <NeonButton variant="secondary">
               Reserve
             </NeonButton>
           </div>
         </GlassPanel>
 
-        <div className="grid gap-4 2xl:col-span-2">
+        <div className="grid gap-4 xl:col-span-2">
           <GlassPanel className="p-4">
-            <p className="font-heading text-sm tracking-[0.2em] text-accent-cyan">
-              Inventory
-            </p>
+            <p className="font-heading text-2xl text-slate-900">Inventory</p>
             <div className="mt-3 space-y-2 text-sm">
               {[
                 "Hall A - 1",
@@ -43,7 +41,7 @@ export default function ResourceAllocationPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-xl border border-base-line bg-base-bg/55 px-3 py-2"
+                  className="rounded-lg border border-slate-200 px-3 py-2"
                 >
                   {item}
                 </div>
@@ -52,14 +50,12 @@ export default function ResourceAllocationPage() {
           </GlassPanel>
 
           <GlassPanel className="p-4">
-            <p className="font-heading text-sm tracking-[0.2em] text-accent-lime">
-              Pending Queue
-            </p>
-            <div className="mt-3 space-y-2 text-sm text-base-text/80">
-              <div className="rounded-xl border border-base-line bg-base-bg/55 px-3 py-2">
+            <p className="font-heading text-2xl text-slate-900">Pending Queue</p>
+            <div className="mt-3 space-y-2 text-sm text-slate-700">
+              <div className="rounded-lg border border-slate-200 px-3 py-2">
                 CloudOps Bootcamp requests 2 projectors
               </div>
-              <div className="rounded-xl border border-base-line bg-base-bg/55 px-3 py-2">
+              <div className="rounded-lg border border-slate-200 px-3 py-2">
                 Research Summit requests Hall A extension
               </div>
             </div>

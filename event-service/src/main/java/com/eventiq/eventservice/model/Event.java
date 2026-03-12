@@ -13,6 +13,9 @@ public class Event {
     private String id;
     private String title;
     private String description;
+    private String location;
+    private Integer capacity;
+    private String status;
     private Instant eventDate;
     private String organizerId;
     private List<String> participantIds = new ArrayList<>();
@@ -39,6 +42,30 @@ public class Event {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Instant getEventDate() {

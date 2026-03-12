@@ -5,47 +5,42 @@ export default function NotificationsPage() {
   return (
     <section>
       <SectionHeader
-        title="Notification Stream"
-        subtitle="Emails, reminders, and service events"
+        title="Notifications"
+        subtitle="Current communication panel and service integration roadmap."
       />
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <GlassPanel className="p-5 xl:col-span-3">
-          <p className="font-heading text-sm tracking-[0.2em] text-accent-cyan">
-            Latest Activity
-          </p>
-          <ul className="mt-3 space-y-2 text-sm text-base-text/80">
-            <li className="rounded-lg border border-base-line bg-base-bg/60 p-3">
-              10:02 AM - Event registration confirmation sent to 42 participants
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <GlassPanel className="p-5 lg:col-span-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-500">Latest Activity</p>
+          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+            <li className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              10:02 AM - Event registration confirmation sent to 42 participants.
             </li>
-            <li className="rounded-lg border border-base-line bg-base-bg/60 p-3">
-              09:49 AM - Resource allocation event consumed from Kafka topic
-              resource-allocation
+            <li className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              09:49 AM - Resource allocation event consumed from topic resource-allocation.
             </li>
-            <li className="rounded-lg border border-base-line bg-base-bg/60 p-3">
-              09:30 AM - Reminder scheduler pushed pre-event email batch
+            <li className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              09:30 AM - Reminder scheduler pushed pre-event email batch.
             </li>
-            <li className="rounded-lg border border-base-line bg-base-bg/60 p-3">
-              09:11 AM - Event-created stream triggered organizer summary mail
+            <li className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              09:11 AM - Event-created stream triggered organizer summary email.
             </li>
           </ul>
         </GlassPanel>
 
-        <GlassPanel className="p-5 xl:col-span-2">
-          <p className="font-heading text-sm tracking-[0.2em] text-accent-lime">
-            Channels
-          </p>
+        <GlassPanel className="p-5 lg:col-span-2">
+          <p className="font-heading text-2xl text-slate-900">Channels</p>
           <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between rounded-xl border border-base-line bg-base-bg/55 px-3 py-2">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
               <span>Email</span>
-              <span className="text-accent-cyan">Healthy</span>
+              <span className="status-chip bg-emerald-100 text-emerald-700">Healthy</span>
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-base-line bg-base-bg/55 px-3 py-2">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
               <span>Kafka Consumer</span>
-              <span className="text-accent-cyan">Running</span>
+              <span className="status-chip bg-emerald-100 text-emerald-700">Running</span>
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-base-line bg-base-bg/55 px-3 py-2">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
               <span>Retry Queue</span>
-              <span className="text-accent-amber">3 items</span>
+              <span className="status-chip bg-amber-100 text-amber-700">3 items</span>
             </div>
           </div>
         </GlassPanel>

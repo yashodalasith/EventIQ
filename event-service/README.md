@@ -4,9 +4,12 @@ Spring Boot microservice for event management.
 
 ## Features
 
-- Event CRUD and listing
-- Registration to events
-- Request validation (`@Valid`)
+- Event creation, listing, detail, update, publish, and registrations
+- Role-based authorization via Auth Service profile validation
+- Ownership checks (only owner/admin can update/publish)
+- Request validation (`@Valid`, field constraints)
+- Rate limiting with configurable limits
+- Structured error responses and request logging
 - REST integration with Auth Service profile endpoint
 - Kafka publishing for `event-created` and `event-registration`
 
@@ -25,8 +28,27 @@ Spring Boot microservice for event management.
 
 ## Endpoints
 
-- `POST /events`
-- `GET /events`
+- `GET /health`
+- `POST /events` (admin, organizer)
+- `GET /events` (public list)
 - `GET /events/{id}`
-- `PUT /events/{id}`
-- `POST /events/{id}/register`
+- `PUT /events/{id}` (owner or admin)
+- `GET /events/mine` (admin, organizer)
+- `POST /events/{id}/publish` (owner or admin)
+- `POST /events/{id}/register` (authenticated user)
+
+## Security Practices
+
+- CORS restricted by `CORS_ORIGIN`
+- Rate limiting (`RATE_LIMIT_MAX_REQUESTS`, `RATE_LIMIT_WINDOW_SECONDS`)
+- Auth forwarding and validation via Authorization header
+- RBAC enforcement (`admin`, `organizer`, `participant`)
+- Input validation for all write operations
+- Structured logs for requests and Kafka publish status
+
+## Integration
+
+- REST: calls Auth Service `GET /auth/profile` to validate token and fetch role/id
+- Kafka topic emits:
+  - `event-created`
+  - `event-registration`

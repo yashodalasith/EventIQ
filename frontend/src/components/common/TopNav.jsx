@@ -1,27 +1,26 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const links = [
   ["/dashboard", "Dashboard"],
   ["/events", "Events"],
-  ["/resources", "Resources"],
   ["/registrations", "Registrations"],
-  ["/notifications", "Notifications"],
+  ["/events/create", "Create Event"],
+  ["/resources", "Resources"],
+  ["/notifications", "Notifications"]
 ];
 
 export default function TopNav() {
+  const { user, signOut } = useAuth();
+
   return (
-    <header className="sticky top-0 z-10 border-b border-base-line/70 bg-base-bg/75 backdrop-blur-lg">
-      <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
-          <NavLink
-            to="/dashboard"
-            className="font-heading text-lg tracking-[0.22em] text-accent-cyan"
-          >
+          <NavLink to="/dashboard" className="font-heading text-2xl text-slate-900">
             EVENTIQ
           </NavLink>
-          <p className="text-xs text-base-text/60">
-            Smart Event and Resource Management
-          </p>
+          <p className="text-xs text-slate-500">Smart Event and Resource Management</p>
         </div>
 
         <nav className="flex flex-wrap items-center gap-2 text-xs sm:gap-3 sm:text-sm">
@@ -30,10 +29,10 @@ export default function TopNav() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `rounded-lg px-3 py-1.5 transition ${
+                `rounded-md px-3 py-1.5 font-medium transition ${
                   isActive
-                    ? "border border-accent-lime/60 bg-accent-lime/15 text-accent-lime"
-                    : "border border-base-line text-base-text/70 hover:border-accent-cyan/40 hover:text-accent-cyan"
+                    ? "border border-blue-700 bg-blue-50 text-blue-700"
+                    : "border border-slate-300 text-slate-700 hover:bg-slate-100"
                 }`
               }
             >
@@ -41,8 +40,15 @@ export default function TopNav() {
             </NavLink>
           ))}
 
-          <button className="rounded-lg border border-accent-amber/60 bg-accent-amber/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-accent-amber hover:bg-accent-amber/20 sm:text-sm">
-            Create
+          <div className="ml-2 hidden rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 sm:block">
+            {user?.email || "Unknown user"} ({user?.role || "participant"})
+          </div>
+
+          <button
+            onClick={signOut}
+            className="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+          >
+            Logout
           </button>
         </nav>
       </div>

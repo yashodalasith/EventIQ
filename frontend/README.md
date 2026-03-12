@@ -26,6 +26,7 @@ React + Vite + Tailwind frontend for EventIQ with implemented Auth, Event Servic
 - Dashboard with live event metrics from Event Service
 - Events listing with search, status filter, register action, publish action
 - Create Event form connected to Event Service create endpoint
+- Resource Allocation center with live inventory filters, role-aware allocation workflow, and allocation release tracking
 - My Registrations based on participant registration data
 - Notifications center with live delivery history, topic filters, operational metrics, and manual send form for organizer/admin roles
 

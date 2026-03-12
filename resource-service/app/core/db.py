@@ -1,32 +1,23 @@
-from collections.abc import Generator
+from functools import lru_cache
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from bson import ObjectId
+from pymongo import MongoClient
+from pymongo.database import Database
 
 from app.core.config import settings
 
-connect_args: dict[str, str] = {}
-if settings.db_ssl_require and settings.database_url.startswith("postgresql"):
-    connect_args["sslmode"] = "require"
 
-engine = create_engine(
-    settings.database_url,
-    pool_pre_ping=True,
-    future=True,
-    connect_args=connect_args,
-)
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-    future=True,
-)
-Base = declarative_base()
+@lru_cache(maxsize=1)
+def get_client() -> MongoClient:
+    return MongoClient(settings.mongo_uri)
 
 
-def get_db() -> Generator:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@lru_cache(maxsize=1)
+def get_database() -> Database:
+    return get_client()[settings.mongo_db_name]
+
+
+def to_object_id(value: str) -> ObjectId:
+    if not ObjectId.is_valid(value):
+        raise ValueError("Invalid id format")
+    return ObjectId(value)

@@ -10,13 +10,13 @@ FastAPI microservice for resource inventory, scheduling, and event-linked alloca
 - Validate event existence and organizer ownership through Event Service REST calls
 - Pydantic input validation and JWT-based RBAC checks
 - Kafka publishing for `resource-allocation`
-- Supabase-compatible PostgreSQL configuration with optional SSL enforcement
+- MongoDB-based persistence (local Docker Mongo or MongoDB Atlas free tier)
 - Request logging and in-memory rate limiting
 
 ## Prerequisites
 
 - Python 3.11+
-- PostgreSQL
+- MongoDB
 - Kafka
 
 ## Setup
@@ -27,7 +27,7 @@ FastAPI microservice for resource inventory, scheduling, and event-linked alloca
    - `.venv\\Scripts\\activate`
    - `pip install -r requirements.txt`
 3. Run service:
-   - `uvicorn app.main:app --reload --port 8000`
+   - `uvicorn app.main:app --reload --port 8001`
 
 ## Endpoints
 
@@ -46,11 +46,12 @@ FastAPI microservice for resource inventory, scheduling, and event-linked alloca
 - `organizer`: allocate resources for events they own, release those allocations, view summary and allocations
 - `participant`: view resource inventory only
 
-## Supabase Notes
+## MongoDB Hosting Notes
 
-- Use the Supabase pooled PostgreSQL connection string in `DATABASE_URL`
-- Set `DB_SSL_REQUIRE=true` for cloud-hosted Supabase databases
-- For local Docker PostgreSQL, set `DB_SSL_REQUIRE=false`
+- Recommended free cloud option: MongoDB Atlas
+- Set `MONGO_URI` with your Atlas connection string
+- Use `MONGO_DB_NAME=resource_db` (or another db name)
+- For local Docker, use `MONGO_URI=mongodb://mongodb:27017`
 
 ## Integration
 

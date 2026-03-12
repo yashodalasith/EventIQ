@@ -2,14 +2,11 @@ from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session, joinedload
 
-from app.core.db import get_db
+from app.core.db import get_database, to_object_id
 from app.core.event_client import fetch_event
 from app.core.messaging import publish_resource_allocation
-from app.core.security import decode_bearer_token, require_roles
-from app.models.resource import Allocation, Resource
+from app.core.security import require_roles
 from app.schemas.resource import (
     AllocationCreate,
     AllocationRead,
@@ -23,23 +20,54 @@ from app.schemas.resource import (
 router = APIRouter()
 
 
-def _map_allocation(allocation: Allocation) -> AllocationRead:
-    resource = allocation.resource
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_iso(value: str | datetime) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    try:
+        normalized = value.replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid datetime format",
+        ) from exc
+
+
+def _resource_read(document: dict) -> ResourceRead:
+    return ResourceRead(
+        id=str(document["_id"]),
+        name=document["name"],
+        resource_type=document["resource_type"],
+        location=document["location"],
+        description=document.get("description"),
+        total_quantity=document["total_quantity"],
+        available_quantity=document["available_quantity"],
+        is_active=document["is_active"],
+        created_at=_parse_iso(document["created_at"]),
+        updated_at=_parse_iso(document["updated_at"]),
+    )
+
+
+def _allocation_read(allocation_doc: dict, resource_doc: dict) -> AllocationRead:
     return AllocationRead(
-        id=allocation.id,
-        event_id=allocation.event_id,
-        resource_id=allocation.resource_id,
-        resource_name=resource.name,
-        resource_type=resource.resource_type,
-        location=resource.location,
-        quantity=allocation.quantity,
-        status=allocation.status,
-        starts_at=allocation.starts_at,
-        ends_at=allocation.ends_at,
-        notes=allocation.notes,
-        allocated_by=allocation.allocated_by,
-        created_at=allocation.created_at,
-        updated_at=allocation.updated_at,
+        id=str(allocation_doc["_id"]),
+        event_id=allocation_doc["event_id"],
+        resource_id=str(allocation_doc["resource_id"]),
+        resource_name=resource_doc["name"],
+        resource_type=resource_doc["resource_type"],
+        location=resource_doc["location"],
+        quantity=allocation_doc["quantity"],
+        status=allocation_doc["status"],
+        starts_at=_parse_iso(allocation_doc["starts_at"]),
+        ends_at=_parse_iso(allocation_doc["ends_at"]),
+        notes=allocation_doc.get("notes"),
+        allocated_by=allocation_doc["allocated_by"],
+        created_at=_parse_iso(allocation_doc["created_at"]),
+        updated_at=_parse_iso(allocation_doc["updated_at"]),
     )
 
 
@@ -47,33 +75,39 @@ def _map_allocation(allocation: Allocation) -> AllocationRead:
 def create_resource(
     request: ResourceCreate,
     payload: dict = Depends(require_roles("admin")),
-    db: Session = Depends(get_db),
 ):
-    duplicate = db.execute(
-        select(Resource).where(
-            func.lower(Resource.name) == request.name.lower(),
-            func.lower(Resource.location) == request.location.lower(),
-        )
-    ).scalar_one_or_none()
+    db = get_database()
+    resources = db["resources"]
+
+    duplicate = resources.find_one(
+        {
+            "name": {"$regex": f"^{request.name}$", "$options": "i"},
+            "location": {"$regex": f"^{request.location}$", "$options": "i"},
+        }
+    )
     if duplicate:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Resource with this name already exists at the selected location",
         )
 
-    resource = Resource(
-        name=request.name,
-        resource_type=request.resource_type,
-        location=request.location,
-        description=request.description,
-        total_quantity=request.total_quantity,
-        available_quantity=request.total_quantity,
-        is_active=True,
-    )
-    db.add(resource)
-    db.commit()
-    db.refresh(resource)
-    return resource
+    now = _now_iso()
+    document = {
+        "name": request.name,
+        "resource_type": request.resource_type,
+        "location": request.location,
+        "description": request.description,
+        "total_quantity": request.total_quantity,
+        "available_quantity": request.total_quantity,
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now,
+        "created_by": payload.get("sub"),
+    }
+
+    inserted = resources.insert_one(document)
+    created = resources.find_one({"_id": inserted.inserted_id})
+    return _resource_read(created)
 
 
 @router.get("/resources", response_model=list[ResourceRead])
@@ -82,78 +116,87 @@ def get_resources(
     location: str | None = Query(default=None),
     available_only: bool = Query(default=False),
     active_only: bool = Query(default=True),
-    db: Session = Depends(get_db),
 ):
-    query = select(Resource)
-    if resource_type:
-        query = query.where(func.lower(Resource.resource_type) == resource_type.lower())
-    if location:
-        query = query.where(func.lower(Resource.location) == location.lower())
-    if available_only:
-        query = query.where(Resource.available_quantity > 0)
-    if active_only:
-        query = query.where(Resource.is_active.is_(True))
+    db = get_database()
+    resources = db["resources"]
 
-    resources = db.execute(query.order_by(Resource.location, Resource.name)).scalars().all()
-    return resources
+    filters: dict = {}
+    if resource_type:
+        filters["resource_type"] = {"$regex": f"^{resource_type}$", "$options": "i"}
+    if location:
+        filters["location"] = {"$regex": f"^{location}$", "$options": "i"}
+    if available_only:
+        filters["available_quantity"] = {"$gt": 0}
+    if active_only:
+        filters["is_active"] = True
+
+    rows = list(resources.find(filters).sort([("location", 1), ("name", 1)]))
+    return [_resource_read(item) for item in rows]
 
 
 @router.get("/resources/summary", response_model=ResourceSummary)
-def get_resource_summary(
-    payload: dict = Depends(require_roles("admin", "organizer")),
-    db: Session = Depends(get_db),
-):
-    total_resources = db.scalar(select(func.count(Resource.id))) or 0
-    active_resources = db.scalar(
-        select(func.count(Resource.id)).where(Resource.is_active.is_(True))
-    ) or 0
-    open_allocations = db.scalar(
-        select(func.count(Allocation.id)).where(Allocation.status == "ALLOCATED")
-    ) or 0
+def get_resource_summary(payload: dict = Depends(require_roles("admin", "organizer"))):
+    db = get_database()
+    resources = db["resources"]
+    allocations = db["allocations"]
 
     return ResourceSummary(
-        total_resources=total_resources,
-        active_resources=active_resources,
-        open_allocations=open_allocations,
+        total_resources=resources.count_documents({}),
+        active_resources=resources.count_documents({"is_active": True}),
+        open_allocations=allocations.count_documents({"status": "ALLOCATED"}),
     )
 
 
 @router.get("/resources/{resource_id}", response_model=ResourceRead)
-def get_resource(resource_id: int, db: Session = Depends(get_db)):
-    resource = db.get(Resource, resource_id)
+def get_resource(resource_id: str):
+    db = get_database()
+    resources = db["resources"]
+
+    try:
+        resource = resources.find_one({"_id": to_object_id(resource_id)})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     if not resource:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
-    return resource
+    return _resource_read(resource)
 
 
 @router.put("/resources/{resource_id}", response_model=ResourceRead)
 def update_resource(
-    resource_id: int,
+    resource_id: str,
     request: ResourceUpdate,
     payload: dict = Depends(require_roles("admin")),
-    db: Session = Depends(get_db),
 ):
-    resource = db.get(Resource, resource_id)
+    db = get_database()
+    resources = db["resources"]
+
+    try:
+        object_id = to_object_id(resource_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    resource = resources.find_one({"_id": object_id})
     if not resource:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
 
-    allocated_quantity = resource.total_quantity - resource.available_quantity
+    updates = request.model_dump(exclude_unset=True)
 
-    for field, value in request.model_dump(exclude_unset=True).items():
-        setattr(resource, field, value)
+    allocated_quantity = resource["total_quantity"] - resource["available_quantity"]
+    if "total_quantity" in updates and updates["total_quantity"] < allocated_quantity:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Total quantity cannot be lower than currently allocated quantity",
+        )
 
-    if request.total_quantity is not None:
-        if request.total_quantity < allocated_quantity:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Total quantity cannot be lower than currently allocated quantity",
-            )
-        resource.available_quantity = request.total_quantity - allocated_quantity
+    if "total_quantity" in updates:
+        updates["available_quantity"] = updates["total_quantity"] - allocated_quantity
 
-    db.add(resource)
-    db.commit()
-    db.refresh(resource)
-    return resource
+    updates["updated_at"] = _now_iso()
+    resources.update_one({"_id": object_id}, {"$set": updates})
+
+    updated = resources.find_one({"_id": object_id})
+    return _resource_read(updated)
 
 
 @router.post("/allocate", response_model=AllocationRead, status_code=status.HTTP_201_CREATED)
@@ -161,8 +204,11 @@ def allocate(
     request: AllocationCreate,
     authorization: Annotated[str | None, Header()] = None,
     payload: dict = Depends(require_roles("admin", "organizer")),
-    db: Session = Depends(get_db),
 ):
+    db = get_database()
+    resources = db["resources"]
+    allocations = db["allocations"]
+
     event = fetch_event(request.event_id, authorization)
     actor_role = payload.get("role")
     actor_id = payload.get("sub")
@@ -173,87 +219,100 @@ def allocate(
             detail="Organizers can only allocate resources for their own events",
         )
 
+    resource = None
     if request.resource_id is not None:
-        resource = db.get(Resource, request.resource_id)
+        try:
+            resource = resources.find_one({"_id": to_object_id(request.resource_id)})
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
     else:
-        resource = db.execute(
-            select(Resource).where(func.lower(Resource.name) == request.resource_name.lower())
-        ).scalar_one_or_none()
+        resource = resources.find_one(
+            {"name": {"$regex": f"^{request.resource_name}$", "$options": "i"}}
+        )
 
     if not resource:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
 
-    if not resource.is_active:
+    if not resource.get("is_active", True):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive resources cannot be allocated",
         )
 
-    overlapping_quantity = db.scalar(
-        select(func.coalesce(func.sum(Allocation.quantity), 0)).where(
-            Allocation.resource_id == resource.id,
-            Allocation.status == "ALLOCATED",
-            Allocation.starts_at < request.ends_at,
-            Allocation.ends_at > request.starts_at,
-        )
-    ) or 0
+    starts_at_iso = request.starts_at.astimezone(timezone.utc).isoformat()
+    ends_at_iso = request.ends_at.astimezone(timezone.utc).isoformat()
 
-    remaining_quantity = resource.total_quantity - overlapping_quantity
+    overlapping_quantity = 0
+    overlap_cursor = allocations.find(
+        {
+            "resource_id": resource["_id"],
+            "status": "ALLOCATED",
+            "starts_at": {"$lt": ends_at_iso},
+            "ends_at": {"$gt": starts_at_iso},
+        }
+    )
+    for row in overlap_cursor:
+        overlapping_quantity += int(row["quantity"])
+
+    remaining_quantity = int(resource["total_quantity"]) - overlapping_quantity
     if remaining_quantity < request.quantity:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Insufficient resource availability for the selected schedule",
         )
 
-    allocation = Allocation(
-        event_id=request.event_id,
-        resource_id=resource.id,
-        quantity=request.quantity,
-        status="ALLOCATED",
-        starts_at=request.starts_at,
-        ends_at=request.ends_at,
-        notes=request.notes,
-        allocated_by=actor_id,
-    )
+    now = _now_iso()
+    allocation_doc = {
+        "event_id": request.event_id,
+        "resource_id": resource["_id"],
+        "quantity": request.quantity,
+        "status": "ALLOCATED",
+        "starts_at": starts_at_iso,
+        "ends_at": ends_at_iso,
+        "notes": request.notes,
+        "allocated_by": actor_id,
+        "created_at": now,
+        "updated_at": now,
+    }
+    inserted = allocations.insert_one(allocation_doc)
 
-    resource.available_quantity = max(resource.available_quantity - request.quantity, 0)
-    db.add(allocation)
-    db.add(resource)
-    db.commit()
-    db.refresh(allocation)
-    db.refresh(resource)
+    next_available = max(int(resource["available_quantity"]) - request.quantity, 0)
+    resources.update_one(
+        {"_id": resource["_id"]},
+        {"$set": {"available_quantity": next_available, "updated_at": now}},
+    )
 
     publish_resource_allocation(
         {
-            "eventId": allocation.event_id,
-            "resource": resource.name,
-            "resourceId": resource.id,
-            "resourceType": resource.resource_type,
-            "location": resource.location,
-            "quantity": allocation.quantity,
+            "eventId": request.event_id,
+            "resource": resource["name"],
+            "resourceId": str(resource["_id"]),
+            "resourceType": resource["resource_type"],
+            "location": resource["location"],
+            "quantity": request.quantity,
             "allocatedTo": actor_id,
-            "startsAt": allocation.starts_at.isoformat(),
-            "endsAt": allocation.ends_at.isoformat(),
+            "startsAt": starts_at_iso,
+            "endsAt": ends_at_iso,
         }
     )
 
-    allocation = db.execute(
-        select(Allocation)
-        .options(joinedload(Allocation.resource))
-        .where(Allocation.id == allocation.id)
-    ).scalar_one()
-    return _map_allocation(allocation)
+    allocation = allocations.find_one({"_id": inserted.inserted_id})
+    resource_latest = resources.find_one({"_id": resource["_id"]})
+    return _allocation_read(allocation, resource_latest)
 
 
 @router.get("/allocations", response_model=list[AllocationRead])
 def get_allocations(
     event_id: str | None = Query(default=None),
     status_filter: str | None = Query(default=None, alias="status"),
-    resource_id: int | None = Query(default=None),
+    resource_id: str | None = Query(default=None),
     payload: dict = Depends(require_roles("admin", "organizer")),
     authorization: Annotated[str | None, Header()] = None,
-    db: Session = Depends(get_db),
 ):
+    db = get_database()
+    resources = db["resources"]
+    allocations = db["allocations"]
+
     if payload.get("role") == "organizer":
         if not event_id:
             raise HTTPException(
@@ -267,42 +326,55 @@ def get_allocations(
                 detail="Organizers can only view allocations for their own events",
             )
 
-    query = select(Allocation).options(joinedload(Allocation.resource))
-
+    filters: dict = {}
     if event_id:
-        query = query.where(Allocation.event_id == event_id)
+        filters["event_id"] = event_id
     if status_filter:
-        query = query.where(Allocation.status == status_filter.upper())
+        filters["status"] = status_filter.upper()
     if resource_id:
-        query = query.where(Allocation.resource_id == resource_id)
+        try:
+            filters["resource_id"] = to_object_id(resource_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    allocations = db.execute(query.order_by(Allocation.starts_at.desc())).scalars().all()
-    return [_map_allocation(item) for item in allocations]
+    rows = list(allocations.find(filters).sort("starts_at", -1))
+    response: list[AllocationRead] = []
+    for row in rows:
+        resource = resources.find_one({"_id": row["resource_id"]})
+        if not resource:
+            continue
+        response.append(_allocation_read(row, resource))
+
+    return response
 
 
 @router.post("/allocations/{allocation_id}/release", response_model=AllocationRead)
 def release_allocation(
-    allocation_id: int,
+    allocation_id: str,
     request: AllocationRelease,
     authorization: Annotated[str | None, Header()] = None,
     payload: dict = Depends(require_roles("admin", "organizer")),
-    db: Session = Depends(get_db),
 ):
-    allocation = db.execute(
-        select(Allocation)
-        .options(joinedload(Allocation.resource))
-        .where(Allocation.id == allocation_id)
-    ).scalar_one_or_none()
+    db = get_database()
+    resources = db["resources"]
+    allocations = db["allocations"]
+
+    try:
+        allocation_object_id = to_object_id(allocation_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    allocation = allocations.find_one({"_id": allocation_object_id})
     if not allocation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Allocation not found")
 
-    if allocation.status != "ALLOCATED":
+    if allocation.get("status") != "ALLOCATED":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only active allocations can be released",
         )
 
-    event = fetch_event(allocation.event_id, authorization)
+    event = fetch_event(allocation["event_id"], authorization)
     actor_role = payload.get("role")
     actor_id = payload.get("sub")
     if actor_role == "organizer" and event.get("organizerId") != actor_id:
@@ -311,17 +383,29 @@ def release_allocation(
             detail="Organizers can only release allocations for their own events",
         )
 
-    allocation.status = "RELEASED"
-    allocation.notes = request.reason or allocation.notes
-    allocation.updated_at = datetime.now(timezone.utc)
-    allocation.resource.available_quantity = min(
-        allocation.resource.total_quantity,
-        allocation.resource.available_quantity + allocation.quantity,
+    resource = resources.find_one({"_id": allocation["resource_id"]})
+    if not resource:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Linked resource not found",
+        )
+
+    now = _now_iso()
+    notes = request.reason or allocation.get("notes")
+    allocations.update_one(
+        {"_id": allocation_object_id},
+        {"$set": {"status": "RELEASED", "notes": notes, "updated_at": now}},
     )
 
-    db.add(allocation)
-    db.add(allocation.resource)
-    db.commit()
-    db.refresh(allocation)
-    db.refresh(allocation.resource)
-    return _map_allocation(allocation)
+    next_available = min(
+        int(resource["total_quantity"]),
+        int(resource["available_quantity"]) + int(allocation["quantity"]),
+    )
+    resources.update_one(
+        {"_id": resource["_id"]},
+        {"$set": {"available_quantity": next_available, "updated_at": now}},
+    )
+
+    allocation_latest = allocations.find_one({"_id": allocation_object_id})
+    resource_latest = resources.find_one({"_id": resource["_id"]})
+    return _allocation_read(allocation_latest, resource_latest)

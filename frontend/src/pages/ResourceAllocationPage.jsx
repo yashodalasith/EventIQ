@@ -225,7 +225,7 @@ export default function ResourceAllocationPage() {
     try {
       await createAllocation(token, {
         event_id: allocationForm.event_id,
-        resource_id: Number(allocationForm.resource_id),
+        resource_id: allocationForm.resource_id,
         quantity: Number(allocationForm.quantity),
         starts_at: new Date(allocationForm.starts_at).toISOString(),
         ends_at: new Date(allocationForm.ends_at).toISOString(),

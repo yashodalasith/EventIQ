@@ -5,10 +5,11 @@ from collections import defaultdict, deque
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pymongo.errors import PyMongoError
 
 from app.api.routes import router
 from app.core.config import settings
-from app.core.db import Base, engine
+from app.core.db import get_database
 
 logger = logging.getLogger(__name__)
 rate_limit_buckets: dict[str, deque[float]] = defaultdict(deque)
@@ -26,8 +27,12 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup() -> None:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Resource service started")
+    try:
+        get_database().command("ping")
+        logger.info("Resource service connected to MongoDB")
+    except PyMongoError as exc:
+        logger.exception("Failed to connect to MongoDB", extra={"error": str(exc)})
+        raise
 
 
 @app.middleware("http")
@@ -72,4 +77,5 @@ def health() -> dict:
         "status": "ok",
         "service": "resource",
         "environment": settings.app_env,
+        "database": "mongodb",
     }

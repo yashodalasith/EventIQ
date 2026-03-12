@@ -15,13 +15,10 @@ def _parse_bool(value: str | None, default: bool) -> bool:
 
 class Settings:
     def __init__(self) -> None:
-        self.port = int(os.getenv("PORT", "8000"))
+        self.port = int(os.getenv("PORT", "8001"))
         self.app_env = os.getenv("APP_ENV", os.getenv("NODE_ENV", "development"))
-        self.database_url = os.getenv(
-            "DATABASE_URL",
-            "postgresql://eventiq:eventiq@localhost:5432/resource_db",
-        )
-        self.db_ssl_require = _parse_bool(os.getenv("DB_SSL_REQUIRE"), False)
+        self.mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+        self.mongo_db_name = os.getenv("MONGO_DB_NAME", "resource_db")
         self.event_service_url = os.getenv(
             "EVENT_SERVICE_URL",
             "http://localhost:8081",

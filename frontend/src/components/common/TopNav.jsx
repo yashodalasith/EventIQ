@@ -7,7 +7,7 @@ const links = [
   ["/registrations", "Registrations"],
   ["/events/create", "Create Event"],
   ["/resources", "Resources"],
-  ["/notifications", "Notifications"]
+  ["/notifications", "Notifications"],
 ];
 
 export default function TopNav() {
@@ -17,10 +17,15 @@ export default function TopNav() {
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div>
-          <NavLink to="/dashboard" className="font-heading text-2xl text-slate-900">
+          <NavLink
+            to="/dashboard"
+            className="font-heading text-2xl text-slate-900"
+          >
             EVENTIQ
           </NavLink>
-          <p className="text-xs text-slate-500">Smart Event and Resource Management</p>
+          <p className="text-xs text-slate-500">
+            Smart Event and Resource Management
+          </p>
         </div>
 
         <nav className="flex flex-wrap items-center gap-2 text-xs sm:gap-3 sm:text-sm">

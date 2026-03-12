@@ -8,7 +8,7 @@ export default function NeonButton({
 }) {
   const variants = {
     primary: "border-blue-700 bg-blue-700 text-white hover:bg-blue-800",
-    secondary: "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+    secondary: "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
   };
 
   return (

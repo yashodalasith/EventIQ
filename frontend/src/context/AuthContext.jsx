@@ -31,7 +31,10 @@ export function AuthProvider({ children }) {
   const persist = (nextToken, nextUser) => {
     setToken(nextToken);
     setUser(nextUser);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: nextToken, user: nextUser }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ token: nextToken, user: nextUser }),
+    );
   };
 
   const signIn = async ({ email, password }) => {
@@ -70,9 +73,9 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
-      refreshProfile
+      refreshProfile,
     }),
-    [token, user, loading]
+    [token, user, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

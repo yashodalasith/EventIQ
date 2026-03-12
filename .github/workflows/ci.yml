@@ -5,14 +5,14 @@ on:
     branches:
       [
         main,
-        develop,
+        dev,
         feature-auth,
         feature-events,
         feature-resources,
         feature-notifications,
       ]
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev]
 
 jobs:
   build-auth:

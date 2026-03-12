@@ -180,54 +180,62 @@ export default function RegistrationsPage() {
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-        <GlassPanel className="p-5 lg:col-span-3">
-          {loading ? (
-            <p className="subtle-text">Loading registrations...</p>
-          ) : null}
-
-          {!loading && !events.length ? (
-            <p className="subtle-text">
-              You have not registered for any published events yet.
+        <GlassPanel className="overflow-hidden lg:col-span-3">
+          <div className="border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-5 py-4 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+              Participation Desk
             </p>
-          ) : null}
+            <h2 className="mt-1 font-heading text-2xl">Registered Events</h2>
+          </div>
+          <div className="p-5">
+            {loading ? (
+              <p className="subtle-text">Loading registrations...</p>
+            ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="rounded-lg border border-slate-200 p-4"
-              >
-                <p className="font-semibold text-slate-900">{event.title}</p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {new Date(event.eventDate).toLocaleString()} •{" "}
-                  {event.location}
-                </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="status-chip bg-emerald-100 text-emerald-700">
-                    Registered
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {event.participantIds?.length || 0} total participants
-                  </span>
+            {!loading && !events.length ? (
+              <p className="subtle-text">
+                You have not registered for any published events yet.
+              </p>
+            ) : null}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {events.map((event) => (
+                <div
+                  key={event.id}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <p className="font-semibold text-slate-900">{event.title}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {new Date(event.eventDate).toLocaleString()} •{" "}
+                    {event.location}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="status-chip bg-emerald-100 text-emerald-700">
+                      Registered
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {event.participantIds?.length || 0} total participants
+                    </span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <NeonButton
+                      className="flex-1"
+                      variant="secondary"
+                      onClick={() => handleGeneratePass(event)}
+                    >
+                      Generate Pass
+                    </NeonButton>
+                    <NeonButton
+                      className="flex-1"
+                      variant="secondary"
+                      onClick={() => handleSyncCalendar(event)}
+                    >
+                      Sync Calendar
+                    </NeonButton>
+                  </div>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <NeonButton
-                    className="flex-1"
-                    variant="secondary"
-                    onClick={() => handleGeneratePass(event)}
-                  >
-                    Generate Pass
-                  </NeonButton>
-                  <NeonButton
-                    className="flex-1"
-                    variant="secondary"
-                    onClick={() => handleSyncCalendar(event)}
-                  >
-                    Sync Calendar
-                  </NeonButton>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </GlassPanel>
 

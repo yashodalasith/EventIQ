@@ -86,19 +86,24 @@ export default function EventListPage() {
       ) : null}
 
       <GlassPanel className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-          <p className="text-sm font-semibold text-slate-700">
-            Event Directory
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-4 py-4 text-white">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+              Event Operations
+            </p>
+            <p className="mt-1 font-heading text-2xl text-white">
+              Event Directory
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <input
-              className="focus-field min-w-44"
+              className="focus-field min-w-44 border-white/30 bg-white/95"
               placeholder="Search by title"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
             <select
-              className="focus-field min-w-36"
+              className="focus-field min-w-36 border-white/30 bg-white/95"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
             >
@@ -134,7 +139,7 @@ export default function EventListPage() {
                 return (
                   <div
                     key={event.id}
-                    className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
+                    className="m-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between"
                   >
                     <div>
                       <p className="text-base font-semibold text-slate-900">

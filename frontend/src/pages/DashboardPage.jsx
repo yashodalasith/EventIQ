@@ -87,15 +87,18 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <GlassPanel className="p-5">
-          <h2 className="font-heading text-2xl text-slate-900">
-            Upcoming Events
-          </h2>
-          <div className="mt-4 space-y-2">
+        <GlassPanel className="overflow-hidden">
+          <div className="border-b border-slate-200 bg-gradient-to-r from-slate-900 to-blue-950 px-5 py-4 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+              Event Timeline
+            </p>
+            <h2 className="mt-1 font-heading text-2xl">Upcoming Events</h2>
+          </div>
+          <div className="space-y-2 p-5">
             {events.slice(0, 5).map((event) => (
               <div
                 key={event.id}
-                className="rounded-lg border border-slate-200 p-3"
+                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
               >
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-slate-900">{event.title}</p>
@@ -113,20 +116,25 @@ export default function DashboardPage() {
             ))}
 
             {!events.length ? (
-              <p className="subtle-text">No events available yet.</p>
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                No events available yet.
+              </div>
             ) : null}
           </div>
         </GlassPanel>
 
-        <GlassPanel className="p-5">
-          <h2 className="font-heading text-2xl text-slate-900">
-            My Organizer Events
-          </h2>
-          <div className="mt-4 space-y-2">
+        <GlassPanel className="overflow-hidden">
+          <div className="border-b border-slate-200 bg-gradient-to-r from-blue-900 to-indigo-900 px-5 py-4 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+              Ownership
+            </p>
+            <h2 className="mt-1 font-heading text-2xl">My Organizer Events</h2>
+          </div>
+          <div className="space-y-2 p-5">
             {myEvents.slice(0, 5).map((event) => (
               <div
                 key={event.id}
-                className="rounded-lg border border-slate-200 p-3"
+                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
               >
                 <p className="font-semibold text-slate-900">{event.title}</p>
                 <p className="mt-1 text-sm text-slate-500">
@@ -137,11 +145,11 @@ export default function DashboardPage() {
             ))}
 
             {!myEvents.length ? (
-              <p className="subtle-text">
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
                 {user?.role === "organizer" || user?.role === "admin"
                   ? "No organizer events yet. Create your first event."
                   : "Switch to organizer role to view owned events."}
-              </p>
+              </div>
             ) : null}
           </div>
         </GlassPanel>

@@ -75,100 +75,108 @@ export default function CreateEventPage() {
         </GlassPanel>
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <GlassPanel className="p-5 xl:col-span-2">
-            <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm text-slate-600">
-                  Title
-                </label>
-                <input
-                  name="title"
-                  value={form.title}
-                  onChange={onChange}
-                  className="focus-field"
-                  placeholder="AI Workshop 2026"
-                  required
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm text-slate-600">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={onChange}
-                  className="focus-field min-h-28"
-                  placeholder="Describe the event goals, audience, and outcomes."
-                  required
-                  minLength={10}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm text-slate-600">
-                  Location
-                </label>
-                <input
-                  name="location"
-                  value={form.location}
-                  onChange={onChange}
-                  className="focus-field"
-                  placeholder="Main Hall A"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm text-slate-600">
-                  Capacity
-                </label>
-                <input
-                  name="capacity"
-                  value={form.capacity}
-                  onChange={onChange}
-                  className="focus-field"
-                  type="number"
-                  min={1}
-                  max={100000}
-                  required
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm text-slate-600">
-                  Event Date
-                </label>
-                <input
-                  name="eventDate"
-                  value={form.eventDate}
-                  onChange={onChange}
-                  className="focus-field"
-                  type="datetime-local"
-                  required
-                />
-              </div>
-
-              {error ? (
-                <div className="sm:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {error}
+          <GlassPanel className="overflow-hidden xl:col-span-2">
+            <div className="border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-5 py-4 text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+                Draft Composer
+              </p>
+              <h2 className="mt-1 font-heading text-2xl">Event Details</h2>
+            </div>
+            <div className="p-5">
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm text-slate-600">
+                    Title
+                  </label>
+                  <input
+                    name="title"
+                    value={form.title}
+                    onChange={onChange}
+                    className="focus-field"
+                    placeholder="AI Workshop 2026"
+                    required
+                  />
                 </div>
-              ) : null}
 
-              <div className="sm:col-span-2 flex gap-2">
-                <NeonButton type="submit" disabled={submitting}>
-                  {submitting ? "Creating..." : "Create Event"}
-                </NeonButton>
-                <NeonButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => navigate("/events")}
-                >
-                  Cancel
-                </NeonButton>
-              </div>
-            </form>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm text-slate-600">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    value={form.description}
+                    onChange={onChange}
+                    className="focus-field min-h-28"
+                    placeholder="Describe the event goals, audience, and outcomes."
+                    required
+                    minLength={10}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm text-slate-600">
+                    Location
+                  </label>
+                  <input
+                    name="location"
+                    value={form.location}
+                    onChange={onChange}
+                    className="focus-field"
+                    placeholder="Main Hall A"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm text-slate-600">
+                    Capacity
+                  </label>
+                  <input
+                    name="capacity"
+                    value={form.capacity}
+                    onChange={onChange}
+                    className="focus-field"
+                    type="number"
+                    min={1}
+                    max={100000}
+                    required
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm text-slate-600">
+                    Event Date
+                  </label>
+                  <input
+                    name="eventDate"
+                    value={form.eventDate}
+                    onChange={onChange}
+                    className="focus-field"
+                    type="datetime-local"
+                    required
+                  />
+                </div>
+
+                {error ? (
+                  <div className="sm:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {error}
+                  </div>
+                ) : null}
+
+                <div className="sm:col-span-2 flex gap-2">
+                  <NeonButton type="submit" disabled={submitting}>
+                    {submitting ? "Creating..." : "Create Event"}
+                  </NeonButton>
+                  <NeonButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() => navigate("/events")}
+                  >
+                    Cancel
+                  </NeonButton>
+                </div>
+              </form>
+            </div>
           </GlassPanel>
 
           <GlassPanel className="p-5">

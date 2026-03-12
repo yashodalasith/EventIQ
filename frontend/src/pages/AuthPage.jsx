@@ -163,15 +163,15 @@ export default function AuthPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-      <GlassPanel className="w-full max-w-6xl overflow-hidden shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+      <GlassPanel className="w-full max-w-6xl overflow-hidden border border-slate-200/80 shadow-[0_28px_90px_rgba(15,23,42,0.1)]">
         <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_1fr]">
-          <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] p-6 xl:border-b-0 xl:border-r xl:p-10">
+          <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_10%_-10%,rgba(15,98,254,0.15),transparent_35%),linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] p-6 xl:border-b-0 xl:border-r xl:p-10">
             <SectionHeader
               title="Identity For Every Role"
               subtitle="Sign in to create events, manage registrations, coordinate resources, and keep every participant informed from one platform."
             />
             <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-2xl border border-blue-100 bg-white p-5">
+              <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
                   What You Can Do
                 </p>
@@ -191,7 +191,7 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
+              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-5 text-white shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
                   Platform Highlights
                 </p>
@@ -221,8 +221,11 @@ export default function AuthPage() {
             className={`p-6 xl:p-10 ${mode === "login" ? "flex items-center" : ""}`}
           >
             <div className="w-full">
-              <div className="mb-6 flex justify-center">
-                <div className="flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-slate-100 p-1.5">
+              <div className="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
+                  Access Mode
+                </p>
+                <div className="flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -231,7 +234,7 @@ export default function AuthPage() {
                       setErrorItems([]);
                       setInvalidFields([]);
                     }}
-                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold ${mode === "login" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition ${mode === "login" ? "bg-blue-700 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}
                   >
                     Login
                   </button>
@@ -243,7 +246,7 @@ export default function AuthPage() {
                       setErrorItems([]);
                       setInvalidFields([]);
                     }}
-                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold ${mode === "register" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition ${mode === "register" ? "bg-blue-700 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}
                   >
                     Register
                   </button>
@@ -316,7 +319,7 @@ export default function AuthPage() {
                                 role: option.value,
                               }))
                             }
-                            className={`rounded-2xl border p-4 text-left transition ${form.role === option.value ? "border-blue-600 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                            className={`rounded-2xl border p-4 text-left transition ${form.role === option.value ? "border-blue-500 bg-blue-50 shadow-[0_8px_20px_rgba(15,98,254,0.12)]" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"}`}
                           >
                             <span className={`status-chip ${option.accent}`}>
                               {option.label}

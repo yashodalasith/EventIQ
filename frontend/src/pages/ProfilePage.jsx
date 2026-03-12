@@ -325,300 +325,329 @@ export default function ProfilePage() {
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_1fr]">
-        <GlassPanel className="p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="font-heading text-2xl text-slate-900">
-              Account Details
-            </h2>
+        <GlassPanel className="overflow-hidden">
+          <div className="flex items-end justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-5 py-4 text-white">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+                Identity Workspace
+              </p>
+              <h2 className="mt-1 font-heading text-2xl text-white">
+                Account Details
+              </h2>
+            </div>
             <NeonButton
               type="button"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="min-w-[130px]"
+              className="min-w-[130px] border-white/30 bg-white/95 !text-slate-900 hover:bg-white"
             >
               {refreshing ? "Refreshing..." : "Refresh Profile"}
             </NeonButton>
           </div>
 
-          {success ? (
-            <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              {success}
-            </div>
-          ) : null}
-
-          {error ? (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <form
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-            onSubmit={handleSubmit}
-          >
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">Name</label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleBasicChange}
-                className="focus-field"
-                required
-                minLength={2}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">Email</label>
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleBasicChange}
-                className="focus-field"
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">Role</label>
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleBasicChange}
-                className="focus-field"
-              >
-                <option value="participant">Participant</option>
-                <option value="organizer">Organizer</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">
-                New Password (optional)
-              </label>
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleBasicChange}
-                className="focus-field"
-                placeholder="Leave empty to keep current"
-                minLength={8}
-              />
-            </div>
-
-            {editableRoleFields.map(([key, label, placeholder]) => (
-              <div key={key}>
-                <label className="mb-1 block text-sm text-slate-600">
-                  {label}
-                </label>
-                <input
-                  name={key}
-                  type={key === "graduationYear" ? "number" : "text"}
-                  value={form.profile[key]}
-                  onChange={handleProfileChange}
-                  className="focus-field"
-                  placeholder={placeholder}
-                  required
-                />
-              </div>
-            ))}
-
-            <div className="sm:col-span-2 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <span>
-                Joined {formatDate(user?.createdAt)} • Last login{" "}
-                {formatDate(user?.lastLoginAt)}
-              </span>
-              <NeonButton
-                type="submit"
-                disabled={saving}
-                className="min-w-[160px]"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </NeonButton>
-            </div>
-          </form>
-        </GlassPanel>
-
-        <GlassPanel className="p-5">
-          <h2 className="font-heading text-2xl text-slate-900">Danger Zone</h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Deleting your account revokes all active sessions and removes your
-            identity record.
-          </p>
-
-          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
-            <label className="mb-1 block text-sm font-medium text-red-800">
-              Confirm password to delete account
-            </label>
-            <input
-              type="password"
-              value={deletePassword}
-              onChange={(event) => setDeletePassword(event.target.value)}
-              className="focus-field"
-              placeholder="Enter your current password"
-            />
-
-            {deleteError ? (
-              <div className="mt-3 rounded-md border border-red-300 bg-white px-3 py-2 text-sm text-red-700">
-                {deleteError}
+          <div className="p-5">
+            {success ? (
+              <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {success}
               </div>
             ) : null}
 
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting || !deletePassword}
-                className="w-full rounded-md border border-red-700 bg-red-700 px-3 py-2 font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {deleting ? "Deleting account..." : "Delete My Account"}
-              </button>
+            {error ? (
+              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <form
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+              onSubmit={handleSubmit}
+            >
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">
+                  Name
+                </label>
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleBasicChange}
+                  className="focus-field"
+                  required
+                  minLength={2}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">
+                  Email
+                </label>
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleBasicChange}
+                  className="focus-field"
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">
+                  Role
+                </label>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleBasicChange}
+                  className="focus-field"
+                >
+                  <option value="participant">Participant</option>
+                  <option value="organizer">Organizer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">
+                  New Password (optional)
+                </label>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleBasicChange}
+                  className="focus-field"
+                  placeholder="Leave empty to keep current"
+                  minLength={8}
+                />
+              </div>
+
+              {editableRoleFields.map(([key, label, placeholder]) => (
+                <div key={key}>
+                  <label className="mb-1 block text-sm text-slate-600">
+                    {label}
+                  </label>
+                  <input
+                    name={key}
+                    type={key === "graduationYear" ? "number" : "text"}
+                    value={form.profile[key]}
+                    onChange={handleProfileChange}
+                    className="focus-field"
+                    placeholder={placeholder}
+                    required
+                  />
+                </div>
+              ))}
+
+              <div className="sm:col-span-2 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <span>
+                  Joined {formatDate(user?.createdAt)} • Last login{" "}
+                  {formatDate(user?.lastLoginAt)}
+                </span>
+                <NeonButton
+                  type="submit"
+                  disabled={saving}
+                  className="min-w-[160px]"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </NeonButton>
+              </div>
+            </form>
+          </div>
+        </GlassPanel>
+
+        <GlassPanel className="overflow-hidden">
+          <div className="border-b border-red-200 bg-gradient-to-r from-red-800 to-rose-800 px-5 py-4 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-100">
+              Critical Action
+            </p>
+            <h2 className="mt-1 font-heading text-2xl text-white">
+              Danger Zone
+            </h2>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-slate-500">
+              Deleting your account revokes all active sessions and removes your
+              identity record.
+            </p>
+
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+              <label className="mb-1 block text-sm font-medium text-red-800">
+                Confirm password to delete account
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+                className="focus-field"
+                placeholder="Enter your current password"
+              />
+
+              {deleteError ? (
+                <div className="mt-3 rounded-md border border-red-300 bg-white px-3 py-2 text-sm text-red-700">
+                  {deleteError}
+                </div>
+              ) : null}
+
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting || !deletePassword}
+                  className="w-full rounded-md border border-red-700 bg-red-700 px-3 py-2 font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {deleting ? "Deleting account..." : "Delete My Account"}
+                </button>
+              </div>
             </div>
           </div>
         </GlassPanel>
 
         {user?.role === "admin" ? (
-          <GlassPanel className="p-5">
-            <h2 className="font-heading text-2xl text-slate-900">
-              Admin Access Control
-            </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Add employee numbers that are allowed to register as admins.
-              Duplicate entries are blocked automatically.
-            </p>
+          <GlassPanel className="overflow-hidden">
+            <div className="border-b border-indigo-200 bg-gradient-to-r from-indigo-900 to-violet-900 px-5 py-4 text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-100">
+                Admin Security
+              </p>
+              <h2 className="mt-1 font-heading text-2xl text-white">
+                Admin Access Control
+              </h2>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-slate-500">
+                Add employee numbers that are allowed to register as admins.
+                Duplicate entries are blocked automatically.
+              </p>
 
-            <form
-              className="mt-4 flex flex-col gap-3"
-              onSubmit={handleAddEmployeeId}
-            >
-              <div>
-                <label className="mb-1 block text-sm text-slate-600">
-                  New Employee ID
-                </label>
-                <input
-                  value={newEmployeeId}
-                  onChange={(event) => setNewEmployeeId(event.target.value)}
-                  className="focus-field"
-                  placeholder="ADM-2048"
-                />
-              </div>
-
-              {adminAccessSuccess ? (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                  {adminAccessSuccess}
+              <form
+                className="mt-4 flex flex-col gap-3"
+                onSubmit={handleAddEmployeeId}
+              >
+                <div>
+                  <label className="mb-1 block text-sm text-slate-600">
+                    New Employee ID
+                  </label>
+                  <input
+                    value={newEmployeeId}
+                    onChange={(event) => setNewEmployeeId(event.target.value)}
+                    className="focus-field"
+                    placeholder="ADM-2048"
+                  />
                 </div>
-              ) : null}
 
-              {adminAccessError ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {adminAccessError}
+                {adminAccessSuccess ? (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                    {adminAccessSuccess}
+                  </div>
+                ) : null}
+
+                {adminAccessError ? (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {adminAccessError}
+                  </div>
+                ) : null}
+
+                <div className="flex justify-end">
+                  <NeonButton type="submit" disabled={addingEmployeeId}>
+                    {addingEmployeeId ? "Adding..." : "Add Employee ID"}
+                  </NeonButton>
                 </div>
-              ) : null}
+              </form>
 
-              <div className="flex justify-end">
-                <NeonButton type="submit" disabled={addingEmployeeId}>
-                  {addingEmployeeId ? "Adding..." : "Add Employee ID"}
-                </NeonButton>
-              </div>
-            </form>
-
-            <div className="mt-5 border-t border-slate-200 pt-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Allowed Employee IDs
-                </h3>
-                <NeonButton
-                  type="button"
-                  variant="secondary"
-                  onClick={async () => {
-                    setLoadingEmployeeIds(true);
-                    setAdminAccessError("");
-                    try {
-                      const rows = await listAdminEmployeeIds(token);
-                      setAllowedEmployeeIds(rows || []);
-                    } catch (err) {
-                      setAdminAccessError(
-                        err?.message || "Failed to load employee allowlist",
-                      );
-                    } finally {
-                      setLoadingEmployeeIds(false);
-                    }
-                  }}
-                  disabled={loadingEmployeeIds}
-                >
-                  {loadingEmployeeIds ? "Refreshing..." : "Refresh List"}
-                </NeonButton>
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-600">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">Employee ID</th>
-                      <th className="px-3 py-2 font-medium">Source</th>
-                      <th className="px-3 py-2 font-medium">Assigned</th>
-                      <th className="px-3 py-2 font-medium">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
-                    {loadingEmployeeIds ? (
-                      <tr>
-                        <td className="px-3 py-3" colSpan={4}>
-                          Loading employee allowlist...
-                        </td>
-                      </tr>
-                    ) : !allowedEmployeeIds.length ? (
-                      <tr>
-                        <td className="px-3 py-3" colSpan={4}>
-                          No employee IDs in the allowlist.
-                        </td>
-                      </tr>
-                    ) : (
-                      allowedEmployeeIds.map((item) => {
-                        const isPredefined = item.source === "predefined";
-                        const isAssigned = Boolean(item.assignedAdmin);
-                        const revokeDisabled =
-                          isPredefined ||
-                          isAssigned ||
-                          revokingEmployeeId === item.employeeId;
-
-                        return (
-                          <tr key={item.employeeId}>
-                            <td className="px-3 py-3 font-medium text-slate-900">
-                              {item.employeeId}
-                            </td>
-                            <td className="px-3 py-3 capitalize">
-                              {item.source}
-                            </td>
-                            <td className="px-3 py-3">
-                              {item.assignedAdmin
-                                ? `${item.assignedAdmin.name} (${item.assignedAdmin.email})`
-                                : "Not assigned"}
-                            </td>
-                            <td className="px-3 py-3">
-                              <NeonButton
-                                type="button"
-                                variant="secondary"
-                                onClick={() =>
-                                  handleRevokeEmployeeId(item.employeeId)
-                                }
-                                disabled={revokeDisabled}
-                              >
-                                {revokingEmployeeId === item.employeeId
-                                  ? "Removing..."
-                                  : isPredefined
-                                    ? "Managed In Env"
-                                    : isAssigned
-                                      ? "Assigned"
-                                      : "Remove"}
-                              </NeonButton>
-                            </td>
-                          </tr>
+              <div className="mt-5 border-t border-slate-200 pt-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Allowed Employee IDs
+                  </h3>
+                  <NeonButton
+                    type="button"
+                    variant="secondary"
+                    onClick={async () => {
+                      setLoadingEmployeeIds(true);
+                      setAdminAccessError("");
+                      try {
+                        const rows = await listAdminEmployeeIds(token);
+                        setAllowedEmployeeIds(rows || []);
+                      } catch (err) {
+                        setAdminAccessError(
+                          err?.message || "Failed to load employee allowlist",
                         );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                      } finally {
+                        setLoadingEmployeeIds(false);
+                      }
+                    }}
+                    disabled={loadingEmployeeIds}
+                  >
+                    {loadingEmployeeIds ? "Refreshing..." : "Refresh List"}
+                  </NeonButton>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50 text-left text-slate-600">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Employee ID</th>
+                        <th className="px-3 py-2 font-medium">Source</th>
+                        <th className="px-3 py-2 font-medium">Assigned</th>
+                        <th className="px-3 py-2 font-medium">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
+                      {loadingEmployeeIds ? (
+                        <tr>
+                          <td className="px-3 py-3" colSpan={4}>
+                            Loading employee allowlist...
+                          </td>
+                        </tr>
+                      ) : !allowedEmployeeIds.length ? (
+                        <tr>
+                          <td className="px-3 py-3" colSpan={4}>
+                            No employee IDs in the allowlist.
+                          </td>
+                        </tr>
+                      ) : (
+                        allowedEmployeeIds.map((item) => {
+                          const isPredefined = item.source === "predefined";
+                          const isAssigned = Boolean(item.assignedAdmin);
+                          const revokeDisabled =
+                            isPredefined ||
+                            isAssigned ||
+                            revokingEmployeeId === item.employeeId;
+
+                          return (
+                            <tr key={item.employeeId}>
+                              <td className="px-3 py-3 font-medium text-slate-900">
+                                {item.employeeId}
+                              </td>
+                              <td className="px-3 py-3 capitalize">
+                                {item.source}
+                              </td>
+                              <td className="px-3 py-3">
+                                {item.assignedAdmin
+                                  ? `${item.assignedAdmin.name} (${item.assignedAdmin.email})`
+                                  : "Not assigned"}
+                              </td>
+                              <td className="px-3 py-3">
+                                <NeonButton
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    handleRevokeEmployeeId(item.employeeId)
+                                  }
+                                  disabled={revokeDisabled}
+                                >
+                                  {revokingEmployeeId === item.employeeId
+                                    ? "Removing..."
+                                    : isPredefined
+                                      ? "Managed In Env"
+                                      : isAssigned
+                                        ? "Assigned"
+                                        : "Remove"}
+                                </NeonButton>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </GlassPanel>

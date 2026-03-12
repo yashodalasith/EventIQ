@@ -21,8 +21,8 @@ React + Vite + Tailwind frontend for EventIQ with implemented Auth, Event Servic
 
 ## Implemented Screens
 
-- Login and registration connected to Auth Service
-- Protected routes with session persistence
+- Login and registration connected to Auth Service with role-specific profile forms
+- Protected routes with session persistence, refresh-token restore, and logout/logout-all controls
 - Dashboard with live event metrics from Event Service
 - Events listing with search, status filter, register action, publish action
 - Create Event form connected to Event Service create endpoint

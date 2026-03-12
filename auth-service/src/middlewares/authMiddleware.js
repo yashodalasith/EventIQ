@@ -1,4 +1,4 @@
-import { verifyToken } from "../services/tokenService.js";
+import { verifyAccessToken } from "../services/tokenService.js";
 
 export const requireAuth = (req, res, next) => {
   const header = req.headers.authorization;
@@ -10,7 +10,7 @@ export const requireAuth = (req, res, next) => {
 
   try {
     const token = header.split(" ")[1];
-    req.user = verifyToken(token);
+    req.user = verifyAccessToken(token);
     return next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });

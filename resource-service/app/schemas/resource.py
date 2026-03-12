@@ -22,7 +22,7 @@ class ResourceUpdate(BaseModel):
 
 
 class ResourceRead(BaseModel):
-    id: int
+    id: str
     name: str
     resource_type: str
     location: str
@@ -39,7 +39,7 @@ class ResourceRead(BaseModel):
 
 class AllocationCreate(BaseModel):
     event_id: str = Field(min_length=2, max_length=120)
-    resource_id: int | None = Field(default=None, ge=1)
+    resource_id: str | None = Field(default=None, min_length=2)
     resource_name: str | None = Field(default=None, min_length=2, max_length=120)
     quantity: int = Field(ge=1, le=10000)
     starts_at: datetime
@@ -60,9 +60,9 @@ class AllocationRelease(BaseModel):
 
 
 class AllocationRead(BaseModel):
-    id: int
+    id: str
     event_id: str
-    resource_id: int
+    resource_id: str
     resource_name: str
     resource_type: str
     location: str

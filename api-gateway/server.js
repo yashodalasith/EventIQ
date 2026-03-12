@@ -15,7 +15,7 @@ const PORT = Number(process.env.PORT || 4000);
 const serviceUrls = {
   auth: process.env.AUTH_SERVICE_URL || "http://localhost:4001",
   event: process.env.EVENT_SERVICE_URL || "http://localhost:8081",
-  resource: process.env.RESOURCE_SERVICE_URL || "http://localhost:8000",
+  resource: process.env.RESOURCE_SERVICE_URL || "http://localhost:8001",
   notification: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:4004",
 };
 

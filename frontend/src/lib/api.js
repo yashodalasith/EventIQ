@@ -42,6 +42,8 @@ async function request(path, options = {}) {
   return payload;
 }
 
+const authHeader = (token) => ({ Authorization: `Bearer ${token}` });
+
 export async function registerUser(input) {
   return request("/auth/register", {
     method: "POST",
@@ -56,28 +58,49 @@ export async function loginUser(input) {
   });
 }
 
+export async function refreshSession(refreshToken) {
+  return request("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export async function logoutUser(refreshToken) {
+  return request("/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export async function logoutAllSessions(token) {
+  return request("/auth/logout-all", {
+    method: "POST",
+    headers: authHeader(token),
+  });
+}
+
 export async function getProfile(token) {
   return request("/auth/profile", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   });
 }
 
 export async function listEvents(token) {
   return request("/events", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   });
 }
 
 export async function listMyEvents(token) {
   return request("/events/mine", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   });
 }
 
 export async function createEvent(token, input) {
   return request("/events", {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
     body: JSON.stringify(input),
   });
 }
@@ -85,27 +108,27 @@ export async function createEvent(token, input) {
 export async function publishEvent(token, eventId) {
   return request(`/events/${eventId}/publish`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   });
 }
 
 export async function registerForEvent(token, eventId) {
   return request(`/events/${eventId}/register`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   });
 }
 
 export async function listNotifications(token, filters = {}) {
   return request(`/notifications${buildQueryString(filters)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
   });
 }
 
 export async function createNotification(token, input) {
   return request("/notify", {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(token),
     body: JSON.stringify(input),
   });
 }

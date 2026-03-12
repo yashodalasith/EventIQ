@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 const links = [
@@ -11,7 +12,33 @@ const links = [
 ];
 
 export default function TopNav() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, signOutAll } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const profileSummary =
+    user?.role === "admin"
+      ? user?.profile?.department
+      : user?.role === "organizer"
+        ? user?.profile?.organization
+        : user?.profile?.institution;
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  const handleSignOutAll = async () => {
+    setSigningOut(true);
+    try {
+      await signOutAll();
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -28,7 +55,7 @@ export default function TopNav() {
           </p>
         </div>
 
-        <nav className="flex flex-wrap items-center gap-2 text-xs sm:gap-3 sm:text-sm">
+        <nav className="flex flex-wrap items-center justify-end gap-2 text-xs sm:gap-3 sm:text-sm">
           {links.map(([to, label]) => (
             <NavLink
               key={to}
@@ -45,15 +72,29 @@ export default function TopNav() {
             </NavLink>
           ))}
 
-          <div className="ml-2 hidden rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 sm:block">
-            {user?.email || "Unknown user"} ({user?.role || "participant"})
+          <div className="ml-2 hidden min-w-[220px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 lg:block">
+            <p className="font-semibold text-slate-800">{user?.name || "Unknown user"}</p>
+            <p className="mt-1 truncate">{user?.email || "No email"}</p>
+            <p className="mt-1 capitalize">
+              {user?.role || "participant"}
+              {profileSummary ? ` • ${profileSummary}` : ""}
+            </p>
           </div>
 
           <button
-            onClick={signOut}
-            className="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+            onClick={handleSignOutAll}
+            disabled={signingOut}
+            className="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Logout
+            Sign Out All
+          </button>
+
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="rounded-md border border-blue-700 bg-blue-700 px-3 py-1.5 font-medium text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {signingOut ? "Signing out..." : "Logout"}
           </button>
         </nav>
       </div>

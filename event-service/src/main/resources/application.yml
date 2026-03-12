@@ -1,0 +1,19 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/event_db}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  auth-service-url: ${AUTH_SERVICE_URL:http://localhost:4001}
+  cors-origin: ${CORS_ORIGIN:http://localhost:5173}

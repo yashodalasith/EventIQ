@@ -1,0 +1,104 @@
+version: '3.9'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: eventiq
+      POSTGRES_PASSWORD: eventiq
+      POSTGRES_DB: resource_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  auth-service:
+    build: ./auth-service
+    env_file:
+      - ./auth-service/.env.sample
+    depends_on:
+      - mongodb
+    ports:
+      - "4001:4001"
+
+  event-service:
+    build: ./event-service
+    env_file:
+      - ./event-service/.env.sample
+    depends_on:
+      - mongodb
+      - kafka
+    ports:
+      - "8081:8081"
+
+  resource-service:
+    build: ./resource-service
+    env_file:
+      - ./resource-service/.env.sample
+    depends_on:
+      - postgres
+      - kafka
+    ports:
+      - "8000:8000"
+
+  notification-service:
+    build: ./notification-service
+    env_file:
+      - ./notification-service/.env.sample
+    depends_on:
+      - kafka
+      - mongodb
+    ports:
+      - "4004:4004"
+
+  api-gateway:
+    build: ./api-gateway
+    env_file:
+      - ./api-gateway/.env.sample
+    depends_on:
+      - auth-service
+      - event-service
+      - resource-service
+      - notification-service
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - api-gateway
+    ports:
+      - "5173:5173"
+
+volumes:
+  mongo_data:
+  postgres_data:

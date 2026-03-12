@@ -16,7 +16,7 @@ const serviceUrls = {
   auth: process.env.AUTH_SERVICE_URL || "http://localhost:4001",
   event: process.env.EVENT_SERVICE_URL || "http://localhost:8081",
   resource: process.env.RESOURCE_SERVICE_URL || "http://localhost:8000",
-  notification: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:4004"
+  notification: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:4004",
 };
 
 app.use(helmet());
@@ -24,18 +24,20 @@ app.use(express.json());
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "http://localhost:5173",
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 app.use(
   rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
-    limit: Number(process.env.RATE_LIMIT_MAX || 300)
-  })
+    limit: Number(process.env.RATE_LIMIT_MAX || 300),
+  }),
 );
 app.use(morgan("combined"));
 
-app.get("/health", (_req, res) => res.json({ status: "ok", service: "gateway" }));
+app.get("/health", (_req, res) =>
+  res.json({ status: "ok", service: "gateway" }),
+);
 
 const optionalAuth = (req, _res, next) => {
   const header = req.headers.authorization;
@@ -70,8 +72,8 @@ app.use(
   optionalAuth,
   createProxyMiddleware({
     target: serviceUrls.auth,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.use(
@@ -80,8 +82,8 @@ app.use(
   requireAuth,
   createProxyMiddleware({
     target: serviceUrls.event,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.use(
@@ -90,8 +92,8 @@ app.use(
   requireAuth,
   createProxyMiddleware({
     target: serviceUrls.resource,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.use(
@@ -100,8 +102,8 @@ app.use(
   requireAuth,
   createProxyMiddleware({
     target: serviceUrls.resource,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.use(
@@ -110,8 +112,8 @@ app.use(
   requireAuth,
   createProxyMiddleware({
     target: serviceUrls.resource,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.use(
@@ -120,8 +122,8 @@ app.use(
   requireAuth,
   createProxyMiddleware({
     target: serviceUrls.notification,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.use(
@@ -130,8 +132,8 @@ app.use(
   requireAuth,
   createProxyMiddleware({
     target: serviceUrls.notification,
-    changeOrigin: true
-  })
+    changeOrigin: true,
+  }),
 );
 
 app.listen(PORT, () => {

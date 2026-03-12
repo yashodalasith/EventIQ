@@ -12,10 +12,12 @@ app.use(express.json());
 app.use(
   cors({
     origin: env.corsOrigin,
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 app.use(morgan("combined"));
 
-app.get("/health", (_req, res) => res.json({ status: "ok", service: "notification" }));
+app.get("/health", (_req, res) =>
+  res.json({ status: "ok", service: "notification" }),
+);
 app.use("/", routes);

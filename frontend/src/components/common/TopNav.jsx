@@ -5,16 +5,24 @@ const links = [
   ["/events", "Events"],
   ["/resources", "Resources"],
   ["/registrations", "Registrations"],
-  ["/notifications", "Notifications"]
+  ["/notifications", "Notifications"],
 ];
 
 export default function TopNav() {
   return (
     <header className="sticky top-0 z-10 border-b border-base-line/70 bg-base-bg/75 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <NavLink to="/dashboard" className="font-heading text-lg tracking-[0.22em] text-accent-cyan">
-          EVENTIQ
-        </NavLink>
+      <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div>
+          <NavLink
+            to="/dashboard"
+            className="font-heading text-lg tracking-[0.22em] text-accent-cyan"
+          >
+            EVENTIQ
+          </NavLink>
+          <p className="text-xs text-base-text/60">
+            Smart Event and Resource Management
+          </p>
+        </div>
 
         <nav className="flex flex-wrap items-center gap-2 text-xs sm:gap-3 sm:text-sm">
           {links.map(([to, label]) => (
@@ -32,6 +40,10 @@ export default function TopNav() {
               {label}
             </NavLink>
           ))}
+
+          <button className="rounded-lg border border-accent-amber/60 bg-accent-amber/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-accent-amber hover:bg-accent-amber/20 sm:text-sm">
+            Create
+          </button>
         </nav>
       </div>
     </header>

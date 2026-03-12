@@ -3,7 +3,9 @@ import { verifyToken } from "../services/tokenService.js";
 export const requireAuth = (req, res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Missing or invalid authorization header" });
+    return res
+      .status(401)
+      .json({ message: "Missing or invalid authorization header" });
   }
 
   try {
@@ -15,9 +17,11 @@ export const requireAuth = (req, res, next) => {
   }
 };
 
-export const requireRole = (...allowedRoles) => (req, res, next) => {
-  if (!req.user || !allowedRoles.includes(req.user.role)) {
-    return res.status(403).json({ message: "Forbidden: insufficient role" });
-  }
-  return next();
-};
+export const requireRole =
+  (...allowedRoles) =>
+  (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden: insufficient role" });
+    }
+    return next();
+  };

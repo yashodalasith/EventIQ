@@ -5,7 +5,7 @@ const transport = nodemailer.createTransport({
   host: env.smtpHost,
   port: env.smtpPort,
   secure: false,
-  auth: env.smtpUser ? { user: env.smtpUser, pass: env.smtpPass } : undefined
+  auth: env.smtpUser ? { user: env.smtpUser, pass: env.smtpPass } : undefined,
 });
 
 export const sendEmail = async ({ to, subject, text }) => {
@@ -13,6 +13,6 @@ export const sendEmail = async ({ to, subject, text }) => {
     from: env.emailFrom,
     to,
     subject,
-    text
+    text,
   });
 };

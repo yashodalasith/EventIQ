@@ -8,9 +8,9 @@ const notificationSchema = new mongoose.Schema(
     subject: { type: String },
     message: { type: String },
     payload: { type: Object },
-    status: { type: String, default: "pending" }
+    status: { type: String, default: "pending" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Notification = mongoose.model("Notification", notificationSchema);

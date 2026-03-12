@@ -9,7 +9,7 @@ export const createNotification = async (req, res) => {
     subject,
     message,
     channel: "email",
-    status: "queued"
+    status: "queued",
   });
 
   await sendEmail({ to: recipient, subject, text: message });

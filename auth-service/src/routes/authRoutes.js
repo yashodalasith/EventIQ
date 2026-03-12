@@ -12,17 +12,20 @@ router.post(
     body("name").trim().notEmpty(),
     body("email").isEmail().normalizeEmail(),
     body("password").isLength({ min: 8 }),
-    body("role").optional().isIn(["admin", "organizer", "participant"])
+    body("role").optional().isIn(["admin", "organizer", "participant"]),
   ],
   validateRequest,
-  register
+  register,
 );
 
 router.post(
   "/login",
-  [body("email").isEmail().normalizeEmail(), body("password").isLength({ min: 8 })],
+  [
+    body("email").isEmail().normalizeEmail(),
+    body("password").isLength({ min: 8 }),
+  ],
   validateRequest,
-  login
+  login,
 );
 
 router.get("/profile", requireAuth, profile);

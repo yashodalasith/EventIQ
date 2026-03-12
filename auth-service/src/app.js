@@ -13,14 +13,14 @@ app.use(express.json());
 app.use(
   cors({
     origin: env.corsOrigin,
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 app.use(
   rateLimit({
     windowMs: env.rateLimitWindowMs,
-    limit: env.rateLimitMax
-  })
+    limit: env.rateLimitMax,
+  }),
 );
 app.use(morgan("combined"));
 

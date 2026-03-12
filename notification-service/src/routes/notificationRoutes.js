@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { body } from "express-validator";
-import { createNotification, listNotifications } from "../controllers/notificationController.js";
+import {
+  createNotification,
+  listNotifications,
+} from "../controllers/notificationController.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 
 const router = Router();
@@ -10,10 +13,10 @@ router.post(
   [
     body("recipient").isEmail(),
     body("subject").isString().isLength({ min: 3, max: 120 }),
-    body("message").isString().isLength({ min: 3, max: 2000 })
+    body("message").isString().isLength({ min: 3, max: 2000 }),
   ],
   validateRequest,
-  createNotification
+  createNotification,
 );
 
 router.get("/notifications", listNotifications);

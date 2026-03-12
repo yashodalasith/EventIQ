@@ -13,7 +13,9 @@ const bootstrap = async () => {
       logger.info(`Notification service listening on ${env.port}`);
     });
   } catch (error) {
-    logger.error("Notification service failed to start", { message: error.message });
+    logger.error("Notification service failed to start", {
+      message: error.message,
+    });
     process.exit(1);
   }
 };

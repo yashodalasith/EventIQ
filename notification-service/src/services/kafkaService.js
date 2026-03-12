@@ -23,12 +23,12 @@ export const startKafkaConsumer = async () => {
           channel: "kafka",
           topic,
           payload,
-          status: "received"
+          status: "received",
         });
         logger.info("Kafka event processed", { topic, payload });
       } catch (error) {
         logger.error("Kafka processing failed", { message: error.message });
       }
-    }
+    },
   });
 };

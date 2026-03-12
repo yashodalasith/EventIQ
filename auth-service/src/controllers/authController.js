@@ -19,7 +19,7 @@ export const register = async (req, res) => {
     id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role
+    role: user.role,
   });
 };
 
@@ -41,7 +41,7 @@ export const login = async (req, res) => {
   const token = signToken({
     sub: user._id.toString(),
     email: user.email,
-    role: user.role
+    role: user.role,
   });
 
   logger.info("User logged in", { email: user.email });
@@ -49,7 +49,9 @@ export const login = async (req, res) => {
 };
 
 export const profile = async (req, res) => {
-  const user = await User.findById(req.user.sub).select("name email role createdAt");
+  const user = await User.findById(req.user.sub).select(
+    "name email role createdAt",
+  );
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -58,6 +60,6 @@ export const profile = async (req, res) => {
     name: user.name,
     email: user.email,
     role: user.role,
-    createdAt: user.createdAt
+    createdAt: user.createdAt,
   });
 };

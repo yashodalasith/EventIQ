@@ -133,4 +133,46 @@ export async function createNotification(token, input) {
   });
 }
 
+export async function listResources(token, filters = {}) {
+  return request(`/resources${buildQueryString(filters)}`, {
+    headers: authHeader(token),
+  });
+}
+
+export async function createResource(token, input) {
+  return request("/resources", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getResourceSummary(token) {
+  return request("/resources/summary", {
+    headers: authHeader(token),
+  });
+}
+
+export async function createAllocation(token, input) {
+  return request("/allocate", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export async function listAllocations(token, filters = {}) {
+  return request(`/allocations${buildQueryString(filters)}`, {
+    headers: authHeader(token),
+  });
+}
+
+export async function releaseAllocation(token, allocationId, reason) {
+  return request(`/allocations/${allocationId}/release`, {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify({ reason }),
+  });
+}
+
 export { API_BASE_URL };

@@ -73,7 +73,9 @@ export default function TopNav() {
           ))}
 
           <div className="ml-2 hidden min-w-[220px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 lg:block">
-            <p className="font-semibold text-slate-800">{user?.name || "Unknown user"}</p>
+            <p className="font-semibold text-slate-800">
+              {user?.name || "Unknown user"}
+            </p>
             <p className="mt-1 truncate">{user?.email || "No email"}</p>
             <p className="mt-1 capitalize">
               {user?.role || "participant"}

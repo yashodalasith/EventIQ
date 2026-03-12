@@ -9,11 +9,19 @@ import ResourceAllocationPage from "./pages/ResourceAllocationPage";
 import RegistrationsPage from "./pages/RegistrationsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 
+const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
 
+  if (BYPASS_AUTH) {
+    return children;
+  }
+
   if (loading) {
-    return <div className="page-wrap text-sm text-slate-500">Loading session...</div>;
+    return (
+      <div className="page-wrap text-sm text-slate-500">Loading session...</div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -25,16 +33,22 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const { isAuthenticated } = useAuth();
+  const canAccessPrivate = BYPASS_AUTH || isAuthenticated;
 
   return (
     <Routes>
-      <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
       <Route
-        element={(
+        path="/auth"
+        element={
+          canAccessPrivate ? <Navigate to="/dashboard" replace /> : <AuthPage />
+        }
+      />
+      <Route
+        element={
           <ProtectedRoute>
             <AppShell />
           </ProtectedRoute>
-        )}
+        }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/events" element={<EventListPage />} />
@@ -43,7 +57,12 @@ export default function App() {
         <Route path="/registrations" element={<RegistrationsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
-      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />} />
+      <Route
+        path="*"
+        element={
+          <Navigate to={canAccessPrivate ? "/dashboard" : "/auth"} replace />
+        }
+      />
     </Routes>
   );
 }

@@ -23,9 +23,7 @@ export default function ResourceAllocationPage() {
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <NeonButton variant="secondary">Allocate Resource</NeonButton>
-            <NeonButton variant="secondary">
-              Reserve
-            </NeonButton>
+            <NeonButton variant="secondary">Reserve</NeonButton>
           </div>
         </GlassPanel>
 
@@ -50,7 +48,9 @@ export default function ResourceAllocationPage() {
           </GlassPanel>
 
           <GlassPanel className="p-4">
-            <p className="font-heading text-2xl text-slate-900">Pending Queue</p>
+            <p className="font-heading text-2xl text-slate-900">
+              Pending Queue
+            </p>
             <div className="mt-3 space-y-2 text-sm text-slate-700">
               <div className="rounded-lg border border-slate-200 px-3 py-2">
                 CloudOps Bootcamp requests 2 projectors

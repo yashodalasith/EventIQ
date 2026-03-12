@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { User } from "../models/User.js";
 import { RefreshToken } from "../models/RefreshToken.js";
+import { AdminEmployeeId } from "../models/AdminEmployeeId.js";
+import { env } from "../config/env.js";
 import {
   decodeToken,
   hashToken,
@@ -10,6 +12,123 @@ import {
   verifyRefreshToken,
 } from "../services/tokenService.js";
 import { logger } from "../config/logger.js";
+
+let adminEmployeeIdsSeeded = false;
+
+const normalizeEmployeeId = (value) =>
+  String(value || "")
+    .trim()
+    .toUpperCase();
+
+const ensureAdminEmployeeIdsSeeded = async () => {
+  if (adminEmployeeIdsSeeded) {
+    return;
+  }
+
+  const employeeIds = Array.from(
+    new Set(env.adminEmployeeIds.map(normalizeEmployeeId).filter(Boolean)),
+  );
+  if (!employeeIds.length) {
+    adminEmployeeIdsSeeded = true;
+    return;
+  }
+
+  await AdminEmployeeId.bulkWrite(
+    employeeIds.map((employeeId) => ({
+      updateOne: {
+        filter: { employeeId },
+        update: {
+          $setOnInsert: {
+            employeeId,
+            source: "predefined",
+            addedBy: null,
+          },
+        },
+        upsert: true,
+      },
+    })),
+  );
+
+  adminEmployeeIdsSeeded = true;
+};
+
+const listAdminEmployeeIdRows = async () => {
+  await ensureAdminEmployeeIdsSeeded();
+
+  const [employeeIds, assignedAdmins] = await Promise.all([
+    AdminEmployeeId.find({}).sort({ employeeId: 1 }).lean(),
+    User.find(
+      {
+        role: "admin",
+        "profile.admin.employeeId": { $exists: true, $ne: null },
+      },
+      "name email profile.admin.employeeId",
+    ).lean(),
+  ]);
+
+  const assignedByEmployeeId = new Map(
+    assignedAdmins.map((admin) => [
+      normalizeEmployeeId(admin.profile?.admin?.employeeId),
+      {
+        id: admin._id.toString(),
+        name: admin.name,
+        email: admin.email,
+      },
+    ]),
+  );
+
+  return employeeIds.map((entry) => {
+    const assignedAdmin = assignedByEmployeeId.get(entry.employeeId) || null;
+    return {
+      id: entry._id.toString(),
+      employeeId: entry.employeeId,
+      source: entry.source,
+      createdAt: entry.createdAt,
+      assignedAdmin,
+    };
+  });
+};
+
+const validateAdminEmployeeIdForRole = async ({
+  employeeId,
+  userId = null,
+}) => {
+  const normalizedEmployeeId = normalizeEmployeeId(employeeId);
+
+  if (!normalizedEmployeeId) {
+    return {
+      ok: false,
+      status: 400,
+      message: "Employee ID is required for admin role",
+    };
+  }
+
+  await ensureAdminEmployeeIdsSeeded();
+
+  const allowedEmployeeId = await AdminEmployeeId.findOne({
+    employeeId: normalizedEmployeeId,
+  });
+  if (!allowedEmployeeId) {
+    return {
+      ok: false,
+      status: 403,
+      message: "Employee number does not exist in our records",
+    };
+  }
+
+  const existingUser = await User.findOne({
+    "profile.admin.employeeId": normalizedEmployeeId,
+  });
+  if (existingUser && existingUser._id.toString() !== String(userId || "")) {
+    return {
+      ok: false,
+      status: 409,
+      message: "Employee number is already linked to another account",
+    };
+  }
+
+  return { ok: true, employeeId: normalizedEmployeeId };
+};
 
 const normalizeProfileByRole = (role, profile = {}) => {
   if (role === "admin") {
@@ -38,6 +157,20 @@ const normalizeProfileByRole = (role, profile = {}) => {
       graduationYear: profile.graduationYear,
     },
   };
+};
+
+const validateRoleProfileData = (role, profile = {}) => {
+  if (role === "admin") {
+    return Boolean(profile.department && profile.employeeId);
+  }
+
+  if (role === "organizer") {
+    return Boolean(profile.organization && profile.phone && profile.title);
+  }
+
+  return Boolean(
+    profile.institution && profile.program && profile.graduationYear,
+  );
 };
 
 const getIpAddress = (req) => {
@@ -102,11 +235,23 @@ const persistRefreshToken = async ({
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   const role = req.body.role || "participant";
-  const profile = req.body.profile || {};
+  const profile = { ...(req.body.profile || {}) };
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res.status(409).json({ message: "Email already exists" });
+  }
+
+  if (role === "admin") {
+    const adminEmployeeValidation = await validateAdminEmployeeIdForRole({
+      employeeId: profile.employeeId,
+    });
+    if (!adminEmployeeValidation.ok) {
+      return res.status(adminEmployeeValidation.status).json({
+        message: adminEmployeeValidation.message,
+      });
+    }
+    profile.employeeId = adminEmployeeValidation.employeeId;
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -281,4 +426,234 @@ export const profile = async (req, res) => {
   }
 
   return res.json(buildPublicUser(user));
+};
+
+export const updateProfile = async (req, res) => {
+  const { name, email, password, role, profile } = req.body;
+
+  const user = await User.findById(req.user.sub);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  let roleChanged = false;
+  const nextRole = role || user.role;
+
+  if (name !== undefined) {
+    user.name = name;
+  }
+
+  if (email !== undefined) {
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (normalizedEmail !== user.email) {
+      const existingUser = await User.findOne({ email: normalizedEmail });
+      if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+      user.email = normalizedEmail;
+    }
+  }
+
+  if (password) {
+    user.passwordHash = await bcrypt.hash(password, 12);
+  }
+
+  if (role && role !== user.role) {
+    roleChanged = true;
+    user.role = role;
+  }
+
+  if (profile) {
+    const mergedProfile = {
+      ...(user.profile?.[nextRole] || {}),
+      ...profile,
+    };
+
+    if (nextRole === "admin") {
+      const adminEmployeeValidation = await validateAdminEmployeeIdForRole({
+        employeeId: mergedProfile.employeeId,
+        userId: user._id,
+      });
+      if (!adminEmployeeValidation.ok) {
+        return res.status(adminEmployeeValidation.status).json({
+          message: adminEmployeeValidation.message,
+        });
+      }
+      mergedProfile.employeeId = adminEmployeeValidation.employeeId;
+    }
+
+    if (!validateRoleProfileData(nextRole, mergedProfile)) {
+      return res.status(400).json({
+        message: `Profile fields are incomplete for role ${nextRole}`,
+      });
+    }
+
+    const normalized = normalizeProfileByRole(nextRole, mergedProfile);
+    user.set(`profile.${nextRole}`, normalized[nextRole]);
+  }
+
+  if (
+    roleChanged &&
+    !validateRoleProfileData(nextRole, user.profile?.[nextRole])
+  ) {
+    return res.status(400).json({
+      message: `Role change to ${nextRole} requires complete role profile data`,
+    });
+  }
+
+  if (roleChanged && nextRole === "admin") {
+    const adminEmployeeValidation = await validateAdminEmployeeIdForRole({
+      employeeId: user.profile?.admin?.employeeId,
+      userId: user._id,
+    });
+    if (!adminEmployeeValidation.ok) {
+      return res.status(adminEmployeeValidation.status).json({
+        message: adminEmployeeValidation.message,
+      });
+    }
+    user.set("profile.admin.employeeId", adminEmployeeValidation.employeeId);
+  }
+
+  await user.save();
+
+  // Role claims live in JWT, so rotate sessions whenever role changes.
+  if (roleChanged) {
+    await RefreshToken.updateMany(
+      {
+        userId: user._id,
+        revokedAt: { $exists: false },
+      },
+      {
+        $set: {
+          revokedAt: new Date(),
+          revokedReason: "role_changed",
+        },
+      },
+    );
+
+    const sessionId = crypto.randomUUID();
+    const tokens = issueTokenPair(user, sessionId);
+    await persistRefreshToken({
+      user,
+      refreshToken: tokens.refreshToken,
+      sessionId,
+      req,
+    });
+
+    return res.json({
+      user: buildPublicUser(user),
+      token: tokens.accessToken,
+      ...tokens,
+    });
+  }
+
+  return res.json({ user: buildPublicUser(user) });
+};
+
+export const deleteAccount = async (req, res) => {
+  const { password } = req.body;
+
+  const user = await User.findById(req.user.sub);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const matches = await bcrypt.compare(password, user.passwordHash);
+  if (!matches) {
+    return res.status(401).json({ message: "Invalid password" });
+  }
+
+  await RefreshToken.updateMany(
+    {
+      userId: user._id,
+      revokedAt: { $exists: false },
+    },
+    {
+      $set: {
+        revokedAt: new Date(),
+        revokedReason: "account_deleted",
+      },
+    },
+  );
+
+  await User.deleteOne({ _id: user._id });
+  return res.status(204).send();
+};
+
+export const addAdminEmployeeId = async (req, res) => {
+  const employeeId = normalizeEmployeeId(req.body.employeeId);
+  if (!employeeId) {
+    return res.status(400).json({ message: "employeeId is required" });
+  }
+
+  await ensureAdminEmployeeIdsSeeded();
+
+  const existing = await AdminEmployeeId.findOne({ employeeId });
+  if (existing) {
+    return res
+      .status(409)
+      .json({ message: "Employee number already exists in allowlist" });
+  }
+
+  const alreadyAssigned = await User.findOne({
+    "profile.admin.employeeId": employeeId,
+  });
+  if (alreadyAssigned) {
+    return res.status(409).json({
+      message: "Employee number is already linked to an admin account",
+    });
+  }
+
+  const created = await AdminEmployeeId.create({
+    employeeId,
+    source: "manual",
+    addedBy: req.user.sub,
+  });
+
+  return res.status(201).json({
+    employeeId: created.employeeId,
+    source: created.source,
+    createdAt: created.createdAt,
+  });
+};
+
+export const listAdminEmployeeIds = async (_req, res) => {
+  const rows = await listAdminEmployeeIdRows();
+  return res.json(rows);
+};
+
+export const revokeAdminEmployeeId = async (req, res) => {
+  const employeeId = normalizeEmployeeId(req.params.employeeId);
+  if (!employeeId) {
+    return res.status(400).json({ message: "employeeId is required" });
+  }
+
+  await ensureAdminEmployeeIdsSeeded();
+
+  const existing = await AdminEmployeeId.findOne({ employeeId });
+  if (!existing) {
+    return res
+      .status(404)
+      .json({ message: "Employee number was not found in allowlist" });
+  }
+
+  if (existing.source === "predefined") {
+    return res.status(400).json({
+      message:
+        "Predefined employee numbers must be removed from ADMIN_EMPLOYEE_IDS in env",
+    });
+  }
+
+  const assignedAdmin = await User.findOne({
+    role: "admin",
+    "profile.admin.employeeId": employeeId,
+  });
+  if (assignedAdmin) {
+    return res.status(409).json({
+      message: "Employee number is already linked to an admin account",
+    });
+  }
+
+  await AdminEmployeeId.deleteOne({ _id: existing._id });
+  return res.status(204).send();
 };

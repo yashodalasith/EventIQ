@@ -8,9 +8,13 @@ export const signAccessToken = (payload) =>
   });
 
 export const signRefreshToken = (payload) =>
-  jwt.sign({ ...payload, tokenType: "refresh" }, env.jwtRefreshSecret, {
-    expiresIn: env.jwtRefreshExpiresIn,
-  });
+  jwt.sign(
+    { ...payload, tokenType: "refresh", jti: crypto.randomUUID() },
+    env.jwtRefreshSecret,
+    {
+      expiresIn: env.jwtRefreshExpiresIn,
+    },
+  );
 
 export const verifyAccessToken = (token) => {
   const decoded = jwt.verify(token, env.jwtSecret);

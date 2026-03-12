@@ -19,8 +19,15 @@ const serviceUrls = {
   notification: process.env.NOTIFICATION_SERVICE_URL || "http://localhost:4004",
 };
 
+const buildProxyOptions = (target) => ({
+  target,
+  changeOrigin: true,
+  timeout: 15000,
+  proxyTimeout: 15000,
+  pathRewrite: (_path, req) => req.originalUrl,
+});
+
 app.use(helmet());
-app.use(express.json());
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "http://localhost:5173",
@@ -70,70 +77,49 @@ const requireAuth = (req, res, next) => {
 app.use(
   "/auth",
   optionalAuth,
-  createProxyMiddleware({
-    target: serviceUrls.auth,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.auth)),
 );
 
 app.use(
   "/events",
   optionalAuth,
   requireAuth,
-  createProxyMiddleware({
-    target: serviceUrls.event,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.event)),
 );
 
 app.use(
   "/resources",
   optionalAuth,
   requireAuth,
-  createProxyMiddleware({
-    target: serviceUrls.resource,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.resource)),
 );
 
 app.use(
   "/allocate",
   optionalAuth,
   requireAuth,
-  createProxyMiddleware({
-    target: serviceUrls.resource,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.resource)),
 );
 
 app.use(
   "/allocations",
   optionalAuth,
   requireAuth,
-  createProxyMiddleware({
-    target: serviceUrls.resource,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.resource)),
 );
 
 app.use(
   "/notify",
   optionalAuth,
   requireAuth,
-  createProxyMiddleware({
-    target: serviceUrls.notification,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.notification)),
 );
 
 app.use(
   "/notifications",
   optionalAuth,
   requireAuth,
-  createProxyMiddleware({
-    target: serviceUrls.notification,
-    changeOrigin: true,
-  }),
+  createProxyMiddleware(buildProxyOptions(serviceUrls.notification)),
 );
 
 app.listen(PORT, () => {

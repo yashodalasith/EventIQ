@@ -8,6 +8,7 @@ import CreateEventPage from "./pages/CreateEventPage";
 import ResourceAllocationPage from "./pages/ResourceAllocationPage";
 import RegistrationsPage from "./pages/RegistrationsPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === "true";
 
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/resources" element={<ResourceAllocationPage />} />
         <Route path="/registrations" element={<RegistrationsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
       <Route
         path="*"

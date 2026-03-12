@@ -81,6 +81,8 @@ export default function AuthPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [errorItems, setErrorItems] = useState([]);
+  const [invalidFields, setInvalidFields] = useState([]);
 
   const selectedRole = useMemo(
     () => roleOptions.find((option) => option.value === form.role),
@@ -92,6 +94,7 @@ export default function AuthPage() {
   const onChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setInvalidFields((prev) => prev.filter((item) => item !== name));
   };
 
   const onProfileChange = (event) => {
@@ -103,12 +106,18 @@ export default function AuthPage() {
         [name]: value,
       },
     }));
+    setInvalidFields((prev) => prev.filter((item) => item !== name));
   };
+
+  const fieldClassName = (name) =>
+    `focus-field ${invalidFields.includes(name) ? "!border-red-400 !bg-red-50 focus:!border-red-500 focus:!ring-red-200" : ""}`;
 
   const onSubmit = async (event) => {
     event.preventDefault();
     setSubmitting(true);
     setError("");
+    setErrorItems([]);
+    setInvalidFields([]);
 
     try {
       if (mode === "login") {
@@ -136,7 +145,17 @@ export default function AuthPage() {
       }
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Authentication failed");
+      const items = Array.isArray(err?.validationErrors)
+        ? err.validationErrors
+        : [];
+      const fields = Array.from(
+        new Set(
+          items.map((item) => item.split(":")[0]?.trim()).filter(Boolean),
+        ),
+      );
+      setInvalidFields(fields);
+      setErrorItems(items);
+      setError(err?.message || "Authentication failed");
     } finally {
       setSubmitting(false);
     }
@@ -198,67 +217,170 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <div className="p-6 xl:p-10">
-            <div className="mb-6 flex items-center gap-2 rounded-xl bg-slate-100 p-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                }}
-                className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold ${mode === "login" ? "bg-white shadow-sm" : "text-slate-500"}`}
-              >
-                Login
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("register");
-                  setError("");
-                }}
-                className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold ${mode === "register" ? "bg-white shadow-sm" : "text-slate-500"}`}
-              >
-                Register
-              </button>
-            </div>
-
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
-                  {mode === "login" ? "Session Access" : "Role-based Signup"}
-                </p>
-                <h2 className="mt-2 font-heading text-3xl text-slate-900">
-                  {mode === "login" ? "Welcome back" : "Create your account"}
-                </h2>
+          <div
+            className={`p-6 xl:p-10 ${mode === "login" ? "flex items-center" : ""}`}
+          >
+            <div className="w-full">
+              <div className="mb-6 flex justify-center">
+                <div className="flex h-14 w-full max-w-sm items-center justify-center gap-2 rounded-xl bg-slate-100 p-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("login");
+                      setError("");
+                      setErrorItems([]);
+                      setInvalidFields([]);
+                    }}
+                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold ${mode === "login" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("register");
+                      setError("");
+                      setErrorItems([]);
+                      setInvalidFields([]);
+                    }}
+                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold ${mode === "register" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                  >
+                    Register
+                  </button>
+                </div>
               </div>
-              {mode === "register" ? (
-                <span
-                  className={`status-chip ${selectedRole?.accent || "bg-slate-100 text-slate-700"}`}
-                >
-                  {selectedRole?.label}
-                </span>
-              ) : null}
-            </div>
 
-            <form className="space-y-4" onSubmit={onSubmit}>
-              {mode === "register" ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm text-slate-600">
-                      Name
-                    </label>
-                    <input
-                      name="name"
-                      value={form.name}
-                      onChange={onChange}
-                      type="text"
-                      className="focus-field"
-                      placeholder="Alex Johnson"
-                      required
-                    />
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+                    {mode === "login" ? "Session Access" : "Role-based Signup"}
+                  </p>
+                  <h2 className="mt-2 font-heading text-3xl text-slate-900">
+                    {mode === "login" ? "Welcome back" : "Create your account"}
+                  </h2>
+                </div>
+                {mode === "register" ? (
+                  <span
+                    className={`status-chip ${selectedRole?.accent || "bg-slate-100 text-slate-700"}`}
+                  >
+                    {selectedRole?.label}
+                  </span>
+                ) : null}
+              </div>
+
+              <form className="space-y-4" onSubmit={onSubmit}>
+                {mode === "register" ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm text-slate-600">
+                        Name
+                      </label>
+                      <input
+                        name="name"
+                        value={form.name}
+                        onChange={onChange}
+                        type="text"
+                        className={fieldClassName("name")}
+                        placeholder="Alex Johnson"
+                        required
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm text-slate-600">
+                        Email
+                      </label>
+                      <input
+                        name="email"
+                        value={form.email}
+                        onChange={onChange}
+                        type="email"
+                        className={fieldClassName("email")}
+                        placeholder="alex@eventiq.com"
+                        required
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm text-slate-600">
+                        Role
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {roleOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() =>
+                              setForm((current) => ({
+                                ...current,
+                                role: option.value,
+                              }))
+                            }
+                            className={`rounded-2xl border p-4 text-left transition ${form.role === option.value ? "border-blue-600 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                          >
+                            <span className={`status-chip ${option.accent}`}>
+                              {option.label}
+                            </span>
+                            <p className="mt-3 text-sm text-slate-600">
+                              {option.description}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {activeProfileFields.map((field) => (
+                      <div key={field.name}>
+                        <label className="mb-1 block text-sm text-slate-600">
+                          {field.label}
+                        </label>
+                        <input
+                          name={field.name}
+                          value={form.profile[field.name]}
+                          onChange={onProfileChange}
+                          type={field.type || "text"}
+                          className={fieldClassName(field.name)}
+                          placeholder={field.placeholder}
+                          required
+                        />
+                      </div>
+                    ))}
+
+                    <div>
+                      <label className="mb-1 block text-sm text-slate-600">
+                        Password
+                      </label>
+                      <input
+                        name="password"
+                        value={form.password}
+                        onChange={onChange}
+                        type="password"
+                        className={fieldClassName("password")}
+                        placeholder="minimum 8 characters"
+                        required
+                        minLength={8}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm text-slate-600">
+                        Confirm Password
+                      </label>
+                      <input
+                        name="confirmPassword"
+                        value={form.confirmPassword}
+                        onChange={onChange}
+                        type="password"
+                        className={fieldClassName("confirmPassword")}
+                        placeholder="re-enter password"
+                        required
+                      />
+                    </div>
                   </div>
+                ) : null}
 
-                  <div className="md:col-span-2">
+                {mode === "login" ? (
+                  <div>
                     <label className="mb-1 block text-sm text-slate-600">
                       Email
                     </label>
@@ -267,57 +389,14 @@ export default function AuthPage() {
                       value={form.email}
                       onChange={onChange}
                       type="email"
-                      className="focus-field"
+                      className={fieldClassName("email")}
                       placeholder="alex@eventiq.com"
                       required
                     />
                   </div>
+                ) : null}
 
-                  <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm text-slate-600">
-                      Role
-                    </label>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {roleOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() =>
-                            setForm((current) => ({
-                              ...current,
-                              role: option.value,
-                            }))
-                          }
-                          className={`rounded-2xl border p-4 text-left transition ${form.role === option.value ? "border-blue-600 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}
-                        >
-                          <span className={`status-chip ${option.accent}`}>
-                            {option.label}
-                          </span>
-                          <p className="mt-3 text-sm text-slate-600">
-                            {option.description}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {activeProfileFields.map((field) => (
-                    <div key={field.name}>
-                      <label className="mb-1 block text-sm text-slate-600">
-                        {field.label}
-                      </label>
-                      <input
-                        name={field.name}
-                        value={form.profile[field.name]}
-                        onChange={onProfileChange}
-                        type={field.type || "text"}
-                        className="focus-field"
-                        placeholder={field.placeholder}
-                        required
-                      />
-                    </div>
-                  ))}
-
+                {mode === "login" ? (
                   <div>
                     <label className="mb-1 block text-sm text-slate-600">
                       Password
@@ -327,89 +406,47 @@ export default function AuthPage() {
                       value={form.password}
                       onChange={onChange}
                       type="password"
-                      className="focus-field"
+                      className={fieldClassName("password")}
                       placeholder="minimum 8 characters"
                       required
                       minLength={8}
                     />
                   </div>
+                ) : null}
 
-                  <div>
-                    <label className="mb-1 block text-sm text-slate-600">
-                      Confirm Password
-                    </label>
-                    <input
-                      name="confirmPassword"
-                      value={form.confirmPassword}
-                      onChange={onChange}
-                      type="password"
-                      className="focus-field"
-                      placeholder="re-enter password"
-                      required
-                    />
+                {error ? (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p>{error}</p>
+                    {errorItems.length > 0 &&
+                    !(errorItems.length === 1 && errorItems[0] === error) ? (
+                      <ul className="mt-2 list-disc space-y-1 pl-5">
+                        {errorItems.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {mode === "login" ? (
-                <div>
-                  <label className="mb-1 block text-sm text-slate-600">
-                    Email
-                  </label>
-                  <input
-                    name="email"
-                    value={form.email}
-                    onChange={onChange}
-                    type="email"
-                    className="focus-field"
-                    placeholder="alex@eventiq.com"
-                    required
-                  />
-                </div>
-              ) : null}
+                <NeonButton
+                  type="submit"
+                  className="w-full"
+                  disabled={submitting}
+                >
+                  {submitting
+                    ? "Please wait..."
+                    : mode === "login"
+                      ? "Sign In"
+                      : "Create Account"}
+                </NeonButton>
 
-              {mode === "login" ? (
-                <div>
-                  <label className="mb-1 block text-sm text-slate-600">
-                    Password
-                  </label>
-                  <input
-                    name="password"
-                    value={form.password}
-                    onChange={onChange}
-                    type="password"
-                    className="focus-field"
-                    placeholder="minimum 8 characters"
-                    required
-                    minLength={8}
-                  />
-                </div>
-              ) : null}
-
-              {error ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {error}
-                </div>
-              ) : null}
-
-              <NeonButton
-                type="submit"
-                className="w-full"
-                disabled={submitting}
-              >
-                {submitting
-                  ? "Please wait..."
-                  : mode === "login"
-                    ? "Sign In"
-                    : "Create Account"}
-              </NeonButton>
-
-              <p className="text-center text-sm text-slate-500">
-                {mode === "login"
-                  ? "Sign in to continue managing your events, registrations, and notifications."
-                  : "Choose the role that matches how you will use EventIQ, and we will collect the right onboarding details."}
-              </p>
-            </form>
+                <p className="text-center text-sm text-slate-500">
+                  {mode === "login"
+                    ? "Sign in to continue managing your events, registrations, and notifications."
+                    : "Choose the role that matches how you will use EventIQ, and we will collect the right onboarding details."}
+                </p>
+              </form>
+            </div>
           </div>
         </div>
       </GlassPanel>

@@ -34,6 +34,16 @@ Node.js + Express authentication service.
 - `POST /auth/logout`
 - `POST /auth/logout-all`
 - `GET /auth/profile`
+- `POST /auth/admin/employee-ids` (admin only)
+- `GET /auth/admin/employee-ids` (admin only)
+- `DELETE /auth/admin/employee-ids/:employeeId` (admin only, manual entries only)
+
+## Admin Registration Guard
+
+- Set `ADMIN_EMPLOYEE_IDS` in `.env` as a comma-separated allowlist (for example: `ADM-1001,ADM-1002`)
+- Registration with role `admin` is allowed only when `profile.employeeId` is in this allowlist
+- Admin employee IDs are unique across users; one employee ID cannot be used by multiple admin accounts
+- Existing admins can add new allowlisted IDs using `POST /auth/admin/employee-ids`
 
 ## Registration Profile Requirements
 

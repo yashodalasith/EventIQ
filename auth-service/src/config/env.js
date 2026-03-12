@@ -7,6 +7,17 @@ const parseNumber = (value, fallback) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const parseCsv = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
 export const env = {
   port: parseNumber(process.env.PORT, 4001),
   nodeEnv: process.env.NODE_ENV || "development",
@@ -21,4 +32,5 @@ export const env = {
     15 * 60 * 1000,
   ),
   rateLimitMax: parseNumber(process.env.RATE_LIMIT_MAX, 200),
+  adminEmployeeIds: parseCsv(process.env.ADMIN_EMPLOYEE_IDS),
 };

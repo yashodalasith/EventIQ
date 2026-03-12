@@ -37,4 +37,15 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+userSchema.index(
+  { "profile.admin.employeeId": 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      role: "admin",
+      "profile.admin.employeeId": { $type: "string" },
+    },
+  },
+);
+
 export const User = mongoose.model("User", userSchema);

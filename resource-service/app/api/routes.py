@@ -291,6 +291,8 @@ def allocate(
             "location": resource["location"],
             "quantity": request.quantity,
             "allocatedTo": actor_id,
+            "status": "ALLOCATED",
+            "action": "allocated",
             "startsAt": starts_at_iso,
             "endsAt": ends_at_iso,
         }
@@ -404,6 +406,103 @@ def release_allocation(
     resources.update_one(
         {"_id": resource["_id"]},
         {"$set": {"available_quantity": next_available, "updated_at": now}},
+    )
+
+    publish_resource_allocation(
+        {
+            "eventId": allocation["event_id"],
+            "resource": resource["name"],
+            "resourceId": str(resource["_id"]),
+            "resourceType": resource["resource_type"],
+            "location": resource["location"],
+            "quantity": int(allocation["quantity"]),
+            "allocatedTo": actor_id,
+            "status": "RELEASED",
+            "action": "released",
+            "reason": request.reason,
+            "startsAt": allocation["starts_at"],
+            "endsAt": allocation["ends_at"],
+        }
+    )
+
+    allocation_latest = allocations.find_one({"_id": allocation_object_id})
+    resource_latest = resources.find_one({"_id": resource["_id"]})
+    return _allocation_read(allocation_latest, resource_latest)
+
+
+@router.post("/allocations/{allocation_id}/cancel", response_model=AllocationRead)
+def cancel_allocation(
+    allocation_id: str,
+    request: AllocationRelease,
+    authorization: Annotated[str | None, Header()] = None,
+    payload: dict = Depends(require_roles("admin", "organizer")),
+):
+    db = get_database()
+    resources = db["resources"]
+    allocations = db["allocations"]
+
+    try:
+        allocation_object_id = to_object_id(allocation_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    allocation = allocations.find_one({"_id": allocation_object_id})
+    if not allocation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Allocation not found")
+
+    if allocation.get("status") != "ALLOCATED":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only active allocations can be cancelled",
+        )
+
+    event = fetch_event(allocation["event_id"], authorization)
+    actor_role = payload.get("role")
+    actor_id = payload.get("sub")
+    if actor_role == "organizer" and event.get("organizerId") != actor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organizers can only cancel allocations for their own events",
+        )
+
+    resource = resources.find_one({"_id": allocation["resource_id"]})
+    if not resource:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Linked resource not found",
+        )
+
+    now = _now_iso()
+    notes = request.reason or allocation.get("notes")
+    allocations.update_one(
+        {"_id": allocation_object_id},
+        {"$set": {"status": "CANCELLED", "notes": notes, "updated_at": now}},
+    )
+
+    next_available = min(
+        int(resource["total_quantity"]),
+        int(resource["available_quantity"]) + int(allocation["quantity"]),
+    )
+    resources.update_one(
+        {"_id": resource["_id"]},
+        {"$set": {"available_quantity": next_available, "updated_at": now}},
+    )
+
+    publish_resource_allocation(
+        {
+            "eventId": allocation["event_id"],
+            "resource": resource["name"],
+            "resourceId": str(resource["_id"]),
+            "resourceType": resource["resource_type"],
+            "location": resource["location"],
+            "quantity": int(allocation["quantity"]),
+            "allocatedTo": actor_id,
+            "status": "CANCELLED",
+            "action": "cancelled",
+            "reason": request.reason,
+            "startsAt": allocation["starts_at"],
+            "endsAt": allocation["ends_at"],
+        }
     )
 
     allocation_latest = allocations.find_one({"_id": allocation_object_id})

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.3
@@ -18,7 +16,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -33,7 +31,7 @@ services:
   auth-service:
     build: ./auth-service
     env_file:
-      - ./auth-service/.env.sample
+      - ./auth-service/.env
     depends_on:
       - mongodb
     ports:
@@ -42,7 +40,7 @@ services:
   event-service:
     build: ./event-service
     env_file:
-      - ./event-service/.env.sample
+      - ./event-service/.env
     depends_on:
       - mongodb
       - kafka
@@ -52,7 +50,7 @@ services:
   resource-service:
     build: ./resource-service
     env_file:
-      - ./resource-service/.env.sample
+      - ./resource-service/.env
     depends_on:
       - mongodb
       - kafka
@@ -62,7 +60,7 @@ services:
   notification-service:
     build: ./notification-service
     env_file:
-      - ./notification-service/.env.sample
+      - ./notification-service/.env
     depends_on:
       - kafka
       - mongodb
@@ -72,7 +70,7 @@ services:
   api-gateway:
     build: ./api-gateway
     env_file:
-      - ./api-gateway/.env.sample
+      - ./api-gateway/.env
     depends_on:
       - auth-service
       - event-service
@@ -83,6 +81,11 @@ services:
 
   frontend:
     build: ./frontend
+    user: "0:0"
+    command: sh -c "npm ci --include=optional && npm run dev"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - api-gateway
     ports:

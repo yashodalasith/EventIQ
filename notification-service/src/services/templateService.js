@@ -28,15 +28,27 @@ export function buildTopicNotification(topic, payload) {
         eventId: payload.eventId,
         sourceService: "event-service",
       };
-    case env.resourceAllocationTopic:
+    case env.resourceAllocationTopic: {
+      const action = String(
+        payload.action || payload.status || "ALLOCATED",
+      ).toLowerCase();
+      const verb =
+        action === "released"
+          ? "released"
+          : action === "cancelled"
+            ? "cancelled"
+            : "allocated";
+      const reason = payload.reason ? ` Reason: ${payload.reason}.` : "";
+
       return {
         recipient: fallbackRecipient(payload),
         subject:
-          `Resource allocation update for event ${payload.eventId || ""}`.trim(),
-        message: `Resource ${payload.resource || "resource"} has been allocated with quantity ${payload.quantity || 0}.`,
+          `Resource allocation ${verb} for event ${payload.eventId || ""}`.trim(),
+        message: `Resource ${payload.resource || "resource"} has been ${verb} with quantity ${payload.quantity || 0}.${reason}`,
         eventId: payload.eventId,
         sourceService: "resource-service",
       };
+    }
     default:
       return {
         recipient: fallbackRecipient(payload),

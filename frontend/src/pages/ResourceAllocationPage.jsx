@@ -4,6 +4,7 @@ import NeonButton from "../components/common/NeonButton";
 import SectionHeader from "../components/common/SectionHeader";
 import { useAuth } from "../context/AuthContext";
 import {
+  cancelAllocation,
   createAllocation,
   createResource,
   getResourceSummary,
@@ -66,6 +67,14 @@ export default function ResourceAllocationPage() {
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [creatingResource, setCreatingResource] = useState(false);
   const [creatingAllocation, setCreatingAllocation] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState(false);
+  const [actionDialog, setActionDialog] = useState({
+    isOpen: false,
+    allocationId: "",
+    type: "release",
+    reason: "",
+    error: "",
+  });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -248,17 +257,61 @@ export default function ResourceAllocationPage() {
     }
   };
 
-  const onReleaseAllocation = async (allocationId) => {
+  const openActionDialog = (type, allocationId) => {
+    setActionDialog({
+      isOpen: true,
+      allocationId,
+      type,
+      reason: "",
+      error: "",
+    });
+  };
+
+  const closeActionDialog = () => {
+    if (submittingAction) {
+      return;
+    }
+    setActionDialog((current) => ({
+      ...current,
+      isOpen: false,
+      reason: "",
+      error: "",
+    }));
+  };
+
+  const onConfirmAction = async () => {
+    const reason = actionDialog.reason.trim();
+    if (!reason) {
+      setActionDialog((current) => ({
+        ...current,
+        error: "Reason is required.",
+      }));
+      return;
+    }
+
+    setSubmittingAction(true);
     setError("");
     setMessage("");
 
-    const reason = window.prompt("Optional reason for release:", "") || "";
     try {
-      await releaseAllocation(token, allocationId, reason);
-      setMessage("Allocation released successfully");
+      if (actionDialog.type === "release") {
+        await releaseAllocation(token, actionDialog.allocationId, reason);
+        setMessage("Allocation released successfully");
+      } else {
+        await cancelAllocation(token, actionDialog.allocationId, reason);
+        setMessage("Allocation cancelled successfully");
+      }
+      setActionDialog((current) => ({
+        ...current,
+        isOpen: false,
+        reason: "",
+        error: "",
+      }));
       await Promise.all([loadResources(), loadAllocations(), loadSummary()]);
     } catch (err) {
-      setError(err.message || "Failed to release allocation");
+      setError(err.message || "Failed to update allocation");
+    } finally {
+      setSubmittingAction(false);
     }
   };
 
@@ -555,7 +608,7 @@ export default function ResourceAllocationPage() {
                     ))}
                 </select>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3">
                   <input
                     className="focus-field"
                     type="number"
@@ -570,21 +623,6 @@ export default function ResourceAllocationPage() {
                     placeholder="Quantity"
                     required
                   />
-                  <select
-                    className="focus-field"
-                    value={allocationFilters.status}
-                    onChange={(event) =>
-                      setAllocationFilters((current) => ({
-                        ...current,
-                        status: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="ALLOCATED">Allocated</option>
-                    <option value="RELEASED">Released</option>
-                    <option value="CANCELLED">Cancelled</option>
-                    <option value="">All statuses</option>
-                  </select>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -677,6 +715,21 @@ export default function ResourceAllocationPage() {
                   </option>
                 ))}
               </select>
+              <select
+                className="focus-field min-w-40"
+                value={allocationFilters.status}
+                onChange={(event) =>
+                  setAllocationFilters((current) => ({
+                    ...current,
+                    status: event.target.value,
+                  }))
+                }
+              >
+                <option value="ALLOCATED">Allocated</option>
+                <option value="RELEASED">Released</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="">All statuses</option>
+              </select>
             </div>
           ) : null}
         </div>
@@ -728,12 +781,24 @@ export default function ResourceAllocationPage() {
                     </span>
                     {allocation.status === "ALLOCATED" &&
                     canManageAllocations ? (
-                      <NeonButton
-                        variant="secondary"
-                        onClick={() => onReleaseAllocation(allocation.id)}
-                      >
-                        Release
-                      </NeonButton>
+                      <>
+                        <NeonButton
+                          variant="secondary"
+                          onClick={() =>
+                            openActionDialog("release", allocation.id)
+                          }
+                        >
+                          Release
+                        </NeonButton>
+                        <NeonButton
+                          variant="secondary"
+                          onClick={() =>
+                            openActionDialog("cancel", allocation.id)
+                          }
+                        >
+                          Cancel
+                        </NeonButton>
+                      </>
                     ) : null}
                   </div>
                 </article>
@@ -741,6 +806,59 @@ export default function ResourceAllocationPage() {
             : null}
         </div>
       </GlassPanel>
+
+      {actionDialog.isOpen ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/45 px-4">
+          <GlassPanel className="w-full max-w-lg p-5">
+            <h3 className="font-heading text-2xl text-slate-900">
+              {actionDialog.type === "release"
+                ? "Release allocation"
+                : "Cancel allocation"}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Add a reason to continue. This note will be saved in the
+              allocation history.
+            </p>
+
+            <textarea
+              className="focus-field mt-4 min-h-28 w-full resize-none"
+              placeholder="Enter reason"
+              value={actionDialog.reason}
+              maxLength={400}
+              onChange={(event) =>
+                setActionDialog((current) => ({
+                  ...current,
+                  reason: event.target.value,
+                  error: "",
+                }))
+              }
+            />
+
+            {actionDialog.error ? (
+              <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {actionDialog.error}
+              </div>
+            ) : null}
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <NeonButton onClick={onConfirmAction} disabled={submittingAction}>
+                {submittingAction
+                  ? "Saving..."
+                  : actionDialog.type === "release"
+                    ? "Confirm Release"
+                    : "Confirm Cancel"}
+              </NeonButton>
+              <NeonButton
+                variant="secondary"
+                onClick={closeActionDialog}
+                disabled={submittingAction}
+              >
+                Back
+              </NeonButton>
+            </div>
+          </GlassPanel>
+        </div>
+      ) : null}
     </section>
   );
 }

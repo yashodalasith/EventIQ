@@ -25,5 +25,7 @@ export const env = {
   directAuthEnabled: (process.env.DIRECT_AUTH_ENABLED || "true") === "true",
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
   rateLimitMax: Number(process.env.RATE_LIMIT_MAX || 200),
+  kafkaStartupRetryMs: Number(process.env.KAFKA_STARTUP_RETRY_MS || 5000),
+  kafkaStartupMaxRetries: Number(process.env.KAFKA_STARTUP_MAX_RETRIES || 0),
   defaultRecipientEmail: process.env.DEFAULT_RECIPIENT_EMAIL || "",
 };

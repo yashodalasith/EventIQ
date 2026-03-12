@@ -1,14 +1,19 @@
 import { Router } from "express";
 import { body } from "express-validator";
 import {
+  addAdminEmployeeId,
+  deleteAccount,
   login,
+  listAdminEmployeeIds,
   logout,
   logoutAll,
   profile,
   refreshAccessToken,
   register,
+  revokeAdminEmployeeId,
+  updateProfile,
 } from "../controllers/authController.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
+import { requireAuth, requireRole } from "../middlewares/authMiddleware.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 
 const router = Router();
@@ -85,5 +90,83 @@ router.post(
 router.post("/logout-all", requireAuth, logoutAll);
 
 router.get("/profile", requireAuth, profile);
+
+router.patch(
+  "/profile",
+  requireAuth,
+  [
+    body("name").optional().trim().isLength({ min: 2, max: 80 }),
+    body("email").optional().isEmail().normalizeEmail(),
+    body("password").optional().isLength({ min: 8, max: 72 }),
+    body("role").optional().isIn(roleValues),
+    body("profile").optional().isObject(),
+  ],
+  validateRequest,
+  updateProfile,
+);
+
+router.delete(
+  "/profile",
+  requireAuth,
+  [
+    body("password")
+      .exists({ checkFalsy: true })
+      .withMessage("Password is required")
+      .bail()
+      .isLength({ min: 8, max: 72 })
+      .withMessage("Password must be 8-72 characters"),
+  ],
+  validateRequest,
+  deleteAccount,
+);
+
+router.post(
+  "/admin/employee-ids",
+  requireAuth,
+  requireRole("admin"),
+  [
+    body("employeeId")
+      .exists({ checkFalsy: true })
+      .withMessage("employeeId is required")
+      .bail()
+      .isString()
+      .withMessage("employeeId must be a string")
+      .bail()
+      .trim()
+      .isLength({ min: 2, max: 60 })
+      .withMessage("employeeId must be 2-60 characters"),
+  ],
+  validateRequest,
+  addAdminEmployeeId,
+);
+
+router.get(
+  "/admin/employee-ids",
+  requireAuth,
+  requireRole("admin"),
+  listAdminEmployeeIds,
+);
+
+router.delete(
+  "/admin/employee-ids/:employeeId",
+  requireAuth,
+  requireRole("admin"),
+  revokeAdminEmployeeId,
+);
+
+router.post(
+  "/profile/delete",
+  requireAuth,
+  [
+    body("password")
+      .exists({ checkFalsy: true })
+      .withMessage("Password is required")
+      .bail()
+      .isLength({ min: 8, max: 72 })
+      .withMessage("Password must be 8-72 characters"),
+  ],
+  validateRequest,
+  deleteAccount,
+);
 
 export default router;

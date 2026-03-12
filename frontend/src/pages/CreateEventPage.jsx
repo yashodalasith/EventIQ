@@ -30,16 +30,31 @@ export default function CreateEventPage() {
     setSubmitting(true);
 
     try {
+      const eventDate = new Date(form.eventDate);
+      if (Number.isNaN(eventDate.getTime())) {
+        throw new Error("Please enter a valid event date and time.");
+      }
+
+      const capacity = Number(form.capacity);
+      if (!Number.isInteger(capacity) || capacity < 1) {
+        throw new Error("Capacity must be a whole number greater than 0.");
+      }
+
       await createEvent(token, {
-        title: form.title,
-        description: form.description,
-        location: form.location,
-        capacity: Number(form.capacity),
-        eventDate: new Date(form.eventDate).toISOString(),
+        title: form.title.trim(),
+        description: form.description.trim(),
+        location: form.location.trim(),
+        capacity,
+        eventDate: eventDate.toISOString(),
       });
       navigate("/events");
     } catch (err) {
-      setError(err.message || "Failed to create event");
+      const details = err?.payload?.details;
+      setError(
+        details
+          ? `${err.message} (${details})`
+          : err.message || "Failed to create event",
+      );
     } finally {
       setSubmitting(false);
     }

@@ -8,12 +8,14 @@ import {
   useState,
 } from "react";
 import {
+  deleteProfile,
   getProfile,
   loginUser,
   logoutAllSessions,
   logoutUser,
   refreshSession,
   registerUser,
+  updateProfile,
 } from "../lib/api";
 
 const AuthContext = createContext(null);
@@ -40,6 +42,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const refreshTimeoutRef = useRef(null);
+  const refreshInFlightRef = useRef(null);
 
   const clearSession = useCallback(() => {
     if (refreshTimeoutRef.current) {
@@ -80,22 +83,48 @@ export function AuthProvider({ children }) {
     [persist],
   );
 
+  const refreshWithDedup = useCallback(async (tokenToUse) => {
+    if (!tokenToUse) {
+      throw new Error("No refresh token available");
+    }
+
+    const inFlight = refreshInFlightRef.current;
+    if (inFlight?.token === tokenToUse) {
+      return inFlight.promise;
+    }
+
+    const promise = refreshSession(tokenToUse).finally(() => {
+      if (refreshInFlightRef.current?.promise === promise) {
+        refreshInFlightRef.current = null;
+      }
+    });
+
+    refreshInFlightRef.current = { token: tokenToUse, promise };
+    return promise;
+  }, []);
+
   const restoreSession = useCallback(
     async (storedSession) => {
-      if (storedSession?.refreshToken) {
-        const refreshed = await refreshSession(storedSession.refreshToken);
-        return applyAuthPayload(refreshed);
+      if (storedSession?.token) {
+        const tokenExpiry = getExpiryMs(storedSession.token);
+        const tokenStillValid =
+          typeof tokenExpiry === "number" && tokenExpiry > Date.now() + 30_000;
+
+        if (tokenStillValid) {
+          const profile = await getProfile(storedSession.token);
+          persist(storedSession.token, storedSession.refreshToken, profile);
+          return profile;
+        }
       }
 
-      if (storedSession?.token) {
-        const profile = await getProfile(storedSession.token);
-        persist(storedSession.token, storedSession.refreshToken, profile);
-        return profile;
+      if (storedSession?.refreshToken) {
+        const refreshed = await refreshWithDedup(storedSession.refreshToken);
+        return applyAuthPayload(refreshed);
       }
 
       return null;
     },
-    [applyAuthPayload, persist],
+    [applyAuthPayload, persist, refreshWithDedup],
   );
 
   useEffect(() => {
@@ -126,13 +155,13 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const payload = await refreshSession(refreshToken);
+      const payload = await refreshWithDedup(refreshToken);
       return await applyAuthPayload(payload);
     } catch (_error) {
       clearSession();
       return null;
     }
-  }, [applyAuthPayload, clearSession, refreshToken]);
+  }, [applyAuthPayload, clearSession, refreshToken, refreshWithDedup]);
 
   useEffect(() => {
     if (refreshTimeoutRef.current) {
@@ -187,6 +216,28 @@ export function AuthProvider({ children }) {
     return profile;
   };
 
+  const updateAccount = async (input) => {
+    if (!token) {
+      return null;
+    }
+
+    const payload = await updateProfile(token, input);
+    if (payload?.token || payload?.accessToken || payload?.refreshToken) {
+      return applyAuthPayload(payload);
+    }
+
+    // Always re-fetch profile after non-token updates to avoid stale UI state.
+    return refreshProfile();
+  };
+
+  const deleteAccount = async ({ password }) => {
+    if (!token) {
+      return;
+    }
+    await deleteProfile(token, password);
+    clearSession();
+  };
+
   const signOut = useCallback(async () => {
     try {
       if (refreshToken) {
@@ -220,8 +271,22 @@ export function AuthProvider({ children }) {
       signOutAll,
       renewSession,
       refreshProfile,
+      updateAccount,
+      deleteAccount,
     }),
-    [token, refreshToken, user, loading, signOut, signOutAll, renewSession],
+    [
+      token,
+      refreshToken,
+      user,
+      loading,
+      signOut,
+      signOutAll,
+      renewSession,
+      clearSession,
+      refreshProfile,
+      applyAuthPayload,
+      persist,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

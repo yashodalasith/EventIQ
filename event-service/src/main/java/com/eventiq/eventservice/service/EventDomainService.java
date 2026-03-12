@@ -44,6 +44,7 @@ public class EventDomainService {
         Map<String, Object> message = new HashMap<>();
         message.put("eventId", saved.getId());
         message.put("organizerId", actor.id());
+        message.put("organizerEmail", actor.email());
         message.put("title", saved.getTitle());
         message.put("eventDate", saved.getEventDate().toString());
         eventProducer.publishEventCreated(message);

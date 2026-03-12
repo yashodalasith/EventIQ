@@ -8,7 +8,16 @@ const notificationSchema = new mongoose.Schema(
     subject: { type: String },
     message: { type: String },
     payload: { type: Object },
-    status: { type: String, default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "queued", "sent", "failed", "received", "skipped"],
+      default: "pending",
+    },
+    sourceService: { type: String, default: "system" },
+    eventId: { type: String },
+    providerMessageId: { type: String },
+    errorMessage: { type: String },
+    deliveryAttempts: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

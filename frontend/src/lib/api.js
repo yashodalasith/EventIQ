@@ -9,6 +9,20 @@ async function parseJson(response) {
   return response.json();
 }
 
+function buildQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+    searchParams.set(key, String(value));
+  });
+
+  const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -79,6 +93,20 @@ export async function registerForEvent(token, eventId) {
   return request(`/events/${eventId}/register`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function listNotifications(token, filters = {}) {
+  return request(`/notifications${buildQueryString(filters)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function createNotification(token, input) {
+  return request("/notify", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
   });
 }
 

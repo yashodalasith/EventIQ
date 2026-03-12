@@ -6,13 +6,14 @@ on:
       [
         main,
         dev,
+        release/v1.0,
         feature-auth,
         feature-events,
         feature-resources,
         feature-notifications,
       ]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, release/v1.0]
 
 jobs:
   build-auth:

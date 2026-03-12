@@ -71,7 +71,8 @@ export function AuthProvider({ children }) {
     async (payload) => {
       const nextToken = payload?.accessToken || payload?.token || null;
       const nextRefreshToken = payload?.refreshToken || null;
-      const nextUser = payload?.user || (nextToken ? await getProfile(nextToken) : null);
+      const nextUser =
+        payload?.user || (nextToken ? await getProfile(nextToken) : null);
 
       persist(nextToken, nextRefreshToken, nextUser);
       return nextUser;
@@ -145,7 +146,9 @@ export function AuthProvider({ children }) {
 
     const tokenToTrack = token || refreshToken;
     const expiryMs = getExpiryMs(tokenToTrack);
-    const refreshInMs = expiryMs ? Math.max(expiryMs - Date.now() - 60_000, 5_000) : 5 * 60_000;
+    const refreshInMs = expiryMs
+      ? Math.max(expiryMs - Date.now() - 60_000, 5_000)
+      : 5 * 60_000;
 
     refreshTimeoutRef.current = window.setTimeout(() => {
       renewSession();
@@ -165,7 +168,13 @@ export function AuthProvider({ children }) {
   };
 
   const signUp = async ({ name, email, password, role, profile }) => {
-    const session = await registerUser({ name, email, password, role, profile });
+    const session = await registerUser({
+      name,
+      email,
+      password,
+      role,
+      profile,
+    });
     return applyAuthPayload(session);
   };
 

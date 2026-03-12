@@ -21,14 +21,19 @@ const roleOptions = [
   {
     value: "admin",
     label: "Admin",
-    description: "Oversee platform operations and coordinate service workflows.",
+    description:
+      "Oversee platform operations and coordinate service workflows.",
     accent: "bg-violet-100 text-violet-700",
   },
 ];
 
 const profileFieldsByRole = {
   participant: [
-    { name: "institution", label: "Institution", placeholder: "State University" },
+    {
+      name: "institution",
+      label: "Institution",
+      placeholder: "State University",
+    },
     { name: "program", label: "Program", placeholder: "Computer Science" },
     {
       name: "graduationYear",
@@ -38,7 +43,11 @@ const profileFieldsByRole = {
     },
   ],
   organizer: [
-    { name: "organization", label: "Organization", placeholder: "EventIQ Labs" },
+    {
+      name: "organization",
+      label: "Organization",
+      placeholder: "EventIQ Labs",
+    },
     { name: "phone", label: "Phone", placeholder: "+91 98765 43210" },
     { name: "title", label: "Title", placeholder: "Program Lead" },
   ],
@@ -149,13 +158,16 @@ export default function AuthPage() {
                 </p>
                 <div className="mt-4 space-y-3 text-sm text-slate-600">
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    Organizers can create events, publish schedules, and monitor registrations in one place
+                    Organizers can create events, publish schedules, and monitor
+                    registrations in one place
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    Participants can discover events, register quickly, and keep track of their upcoming sessions
+                    Participants can discover events, register quickly, and keep
+                    track of their upcoming sessions
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    Admins can oversee platform activity and coordinate event, resource, and notification workflows
+                    Admins can oversee platform activity and coordinate event,
+                    resource, and notification workflows
                   </div>
                 </div>
               </div>
@@ -220,7 +232,9 @@ export default function AuthPage() {
                 </h2>
               </div>
               {mode === "register" ? (
-                <span className={`status-chip ${selectedRole?.accent || "bg-slate-100 text-slate-700"}`}>
+                <span
+                  className={`status-chip ${selectedRole?.accent || "bg-slate-100 text-slate-700"}`}
+                >
                   {selectedRole?.label}
                 </span>
               ) : null}

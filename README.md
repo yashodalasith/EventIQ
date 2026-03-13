@@ -39,7 +39,6 @@ docker compose up --build
 - REST: Event Service -> Auth Service (profile validation)
 - Kafka: Event/Resource domain events -> Notification Service
 
-
 ## Azure Event Hubs Kafka Option
 
 Azure Event Hubs is a practical low-cost deployment choice for this project and works with the existing Kafka client code.

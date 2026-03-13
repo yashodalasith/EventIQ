@@ -2,12 +2,12 @@ import GlassPanel from "./GlassPanel";
 
 export default function StatCard({ label, value, trend }) {
   return (
-    <GlassPanel className="p-4 animate-reveal">
-      <p className="text-xs uppercase tracking-[0.24em] text-base-text/65">
+    <GlassPanel className="animate-reveal p-5">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
         {label}
       </p>
-      <p className="mt-2 font-heading text-2xl text-accent-cyan">{value}</p>
-      <p className="mt-2 text-xs text-accent-amber">{trend}</p>
+      <p className="mt-3 text-3xl font-semibold text-slate-900">{value}</p>
+      <p className="mt-2 text-xs text-slate-500">{trend}</p>
     </GlassPanel>
   );
 }

@@ -6,17 +6,92 @@ on:
       [
         main,
         dev,
+        release/v1.0,
         feature-auth,
         feature-events,
         feature-resources,
         feature-notifications,
       ]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, release/v1.0]
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      auth: ${{ steps.filter_pr.outputs.auth || steps.filter_push.outputs.auth }}
+      notification: ${{ steps.filter_pr.outputs.notification || steps.filter_push.outputs.notification }}
+      frontend: ${{ steps.filter_pr.outputs.frontend || steps.filter_push.outputs.frontend }}
+      resource: ${{ steps.filter_pr.outputs.resource || steps.filter_push.outputs.resource }}
+      event: ${{ steps.filter_pr.outputs.event || steps.filter_push.outputs.event }}
+      compose: ${{ steps.filter_pr.outputs.compose || steps.filter_push.outputs.compose }}
+      backend_any: ${{ steps.filter_pr.outputs.backend_any || steps.filter_push.outputs.backend_any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter_pr
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            auth:
+              - 'auth-service/**'
+            notification:
+              - 'notification-service/**'
+            frontend:
+              - 'frontend/**'
+            resource:
+              - 'resource-service/**'
+            event:
+              - 'event-service/**'
+            compose:
+              - 'docker-compose.yml'
+              - '.github/workflows/ci.yml'
+            backend_any:
+              - 'auth-service/**'
+              - 'notification-service/**'
+              - 'resource-service/**'
+              - 'event-service/**'
+      - id: filter_push
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || 'origin/dev' }}
+          ref: ${{ github.sha }}
+          filters: |
+            auth:
+              - 'auth-service/**'
+            notification:
+              - 'notification-service/**'
+            frontend:
+              - 'frontend/**'
+            resource:
+              - 'resource-service/**'
+            event:
+              - 'event-service/**'
+            compose:
+              - 'docker-compose.yml'
+              - '.github/workflows/ci.yml'
+            backend_any:
+              - 'auth-service/**'
+              - 'notification-service/**'
+              - 'resource-service/**'
+              - 'event-service/**'
+      - name: Debug detected changes
+        run: |
+          echo "auth=${{ steps.filter_pr.outputs.auth || steps.filter_push.outputs.auth }}"
+          echo "notification=${{ steps.filter_pr.outputs.notification || steps.filter_push.outputs.notification }}"
+          echo "frontend=${{ steps.filter_pr.outputs.frontend || steps.filter_push.outputs.frontend }}"
+          echo "resource=${{ steps.filter_pr.outputs.resource || steps.filter_push.outputs.resource }}"
+          echo "event=${{ steps.filter_pr.outputs.event || steps.filter_push.outputs.event }}"
+          echo "compose=${{ steps.filter_pr.outputs.compose || steps.filter_push.outputs.compose }}"
+          echo "backend_any=${{ steps.filter_pr.outputs.backend_any || steps.filter_push.outputs.backend_any }}"
+
   build-auth:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.auth == 'true'
     defaults:
       run:
         working-directory: auth-service
@@ -31,6 +106,8 @@ jobs:
 
   build-notification:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.notification == 'true'
     defaults:
       run:
         working-directory: notification-service
@@ -45,6 +122,8 @@ jobs:
 
   build-frontend:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     defaults:
       run:
         working-directory: frontend
@@ -58,6 +137,8 @@ jobs:
 
   build-resource:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.resource == 'true'
     defaults:
       run:
         working-directory: resource-service
@@ -71,6 +152,8 @@ jobs:
 
   build-event:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.event == 'true'
     defaults:
       run:
         working-directory: event-service
@@ -84,8 +167,10 @@ jobs:
 
   docker-smoke:
     runs-on: ubuntu-latest
+    if: ${{ always() && (needs.detect-changes.outputs.compose == 'true' || needs.detect-changes.outputs.backend_any == 'true') }}
     needs:
       [
+        detect-changes,
         build-auth,
         build-notification,
         build-frontend,
@@ -94,4 +179,12 @@ jobs:
       ]
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare env files for compose validation
+        run: |
+          cp auth-service/.env.sample auth-service/.env
+          cp event-service/.env.sample event-service/.env
+          cp resource-service/.env.sample resource-service/.env
+          cp notification-service/.env.sample notification-service/.env
+          cp api-gateway/.env.sample api-gateway/.env
+          cp frontend/.env.sample frontend/.env
       - run: docker compose -f docker-compose.yml config

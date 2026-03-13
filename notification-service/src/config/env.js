@@ -4,14 +4,36 @@ dotenv.config();
 
 export const env = {
   port: Number(process.env.PORT || 4004),
+  nodeEnv: process.env.NODE_ENV || "development",
   mongoUri:
     process.env.MONGO_URI || "mongodb://localhost:27017/notification_db",
   kafkaBrokers: (process.env.KAFKA_BROKERS || "localhost:9092").split(","),
+  kafkaSecurityProtocol: process.env.KAFKA_SECURITY_PROTOCOL || "PLAINTEXT",
+  kafkaSaslMechanism: (
+    process.env.KAFKA_SASL_MECHANISM || "plain"
+  ).toLowerCase(),
+  kafkaSaslUsername: process.env.KAFKA_SASL_USERNAME || "",
+  kafkaSaslPassword: process.env.KAFKA_SASL_PASSWORD || "",
+  kafkaSslRejectUnauthorized:
+    (process.env.KAFKA_SSL_REJECT_UNAUTHORIZED || "true") === "true",
   kafkaGroupId: process.env.KAFKA_GROUP_ID || "notification-group",
+  eventCreatedTopic: process.env.EVENT_CREATED_TOPIC || "event-created",
+  eventRegistrationTopic:
+    process.env.EVENT_REGISTRATION_TOPIC || "event-registration",
+  resourceAllocationTopic:
+    process.env.RESOURCE_ALLOCATION_TOPIC || "resource-allocation",
   emailFrom: process.env.EMAIL_FROM || "no-reply@eventiq.local",
+  emailTransportMode: process.env.EMAIL_TRANSPORT_MODE || "stub",
   smtpHost: process.env.SMTP_HOST || "localhost",
   smtpPort: Number(process.env.SMTP_PORT || 1025),
   smtpUser: process.env.SMTP_USER || "",
   smtpPass: process.env.SMTP_PASS || "",
   corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  jwtSecret: process.env.JWT_SECRET || "change-me",
+  directAuthEnabled: (process.env.DIRECT_AUTH_ENABLED || "true") === "true",
+  rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  rateLimitMax: Number(process.env.RATE_LIMIT_MAX || 200),
+  kafkaStartupRetryMs: Number(process.env.KAFKA_STARTUP_RETRY_MS || 5000),
+  kafkaStartupMaxRetries: Number(process.env.KAFKA_STARTUP_MAX_RETRIES || 0),
+  defaultRecipientEmail: process.env.DEFAULT_RECIPIENT_EMAIL || "",
 };

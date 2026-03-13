@@ -1,91 +1,188 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GlassPanel from "../components/common/GlassPanel";
 import NeonButton from "../components/common/NeonButton";
 import SectionHeader from "../components/common/SectionHeader";
+import { useAuth } from "../context/AuthContext";
+import { listEvents, publishEvent, registerForEvent } from "../lib/api";
 
 export default function EventListPage() {
+  const navigate = useNavigate();
+  const { token, user } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+
+  const loadEvents = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await listEvents(token);
+      setEvents(data || []);
+    } catch (err) {
+      setError(err.message || "Failed to load events");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEvents();
+  }, [token]);
+
+  const filtered = useMemo(() => {
+    return events
+      .filter((event) =>
+        event.title?.toLowerCase().includes(search.toLowerCase()),
+      )
+      .filter((event) =>
+        statusFilter === "ALL"
+          ? true
+          : (event.status || "DRAFT") === statusFilter,
+      );
+  }, [events, search, statusFilter]);
+
+  const onRegister = async (eventId) => {
+    setActionMessage("");
+    try {
+      await registerForEvent(token, eventId);
+      setActionMessage("Registration successful");
+      await loadEvents();
+    } catch (err) {
+      setError(err.message || "Registration failed");
+    }
+  };
+
+  const onPublish = async (eventId) => {
+    setActionMessage("");
+    try {
+      await publishEvent(token, eventId);
+      setActionMessage("Event published successfully");
+      await loadEvents();
+    } catch (err) {
+      setError(err.message || "Publish failed");
+    }
+  };
+
   return (
     <section>
       <SectionHeader
-        title="Event Matrix"
-        subtitle="Explore and manage all upcoming experiences"
+        title="Events"
+        subtitle="Browse all events and manage publication or registration workflows."
       />
-      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-5">
-        <GlassPanel className="overflow-hidden 2xl:col-span-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-line/70 px-4 py-3">
-            <p className="font-heading text-sm tracking-[0.2em] text-accent-lime">
-              LIVE EVENT TABLE
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <input
-                className="focus-field min-w-44"
-                placeholder="Search by title"
-              />
-              <select className="focus-field min-w-36">
-                <option>All types</option>
-                <option>Hackathon</option>
-                <option>Workshop</option>
-                <option>Conference</option>
-              </select>
-              <NeonButton>Create New Event</NeonButton>
-            </div>
-          </div>
-          <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
-            {[
-              ["Hackathon X", "Mar 22", "320 seats", "Registration Open"],
-              ["AI Workshop", "Apr 02", "140 seats", "Early Bird"],
-              ["Open Research Summit", "Apr 08", "500 seats", "Almost Full"],
-              ["CloudOps Bootcamp", "Apr 13", "200 seats", "Pending Review"],
-              [
-                "Design Systems Forum",
-                "Apr 18",
-                "120 seats",
-                "Registration Open",
-              ],
-              ["Data Ethics Meetup", "Apr 27", "90 seats", "Draft"],
-            ].map(([name, date, capacity, status]) => (
-              <div
-                key={name}
-                className="rounded-xl border border-base-line bg-base-bg/55 p-4"
-              >
-                <p className="font-semibold text-base-text">{name}</p>
-                <p className="mt-1 text-xs text-base-text/65">
-                  {date} • {capacity}
-                </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="rounded-full border border-accent-cyan/50 bg-accent-cyan/10 px-2 py-1 text-xs text-accent-cyan">
-                    {status}
-                  </span>
-                  <button className="text-xs font-semibold text-accent-lime">
-                    Manage
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassPanel>
 
-        <GlassPanel className="p-4 2xl:col-span-1">
-          <p className="font-heading text-sm tracking-[0.2em] text-accent-amber">
-            Insights
-          </p>
-          <div className="mt-3 space-y-3 text-sm">
-            <div className="rounded-xl border border-base-line bg-base-bg/55 p-3">
-              <p className="text-base-text/70">Top Category</p>
-              <p className="font-semibold text-accent-cyan">
-                Technical Workshops
-              </p>
-            </div>
-            <div className="rounded-xl border border-base-line bg-base-bg/55 p-3">
-              <p className="text-base-text/70">Average Fill Rate</p>
-              <p className="font-semibold text-accent-lime">82%</p>
-            </div>
-            <div className="rounded-xl border border-base-line bg-base-bg/55 p-3">
-              <p className="text-base-text/70">Upcoming This Week</p>
-              <p className="font-semibold text-accent-amber">4 events</p>
-            </div>
+      {error ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+      {actionMessage ? (
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {actionMessage}
+        </div>
+      ) : null}
+
+      <GlassPanel className="overflow-hidden">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-4 py-4 text-white">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+              Event Operations
+            </p>
+            <p className="mt-1 font-heading text-2xl text-white">
+              Event Directory
+            </p>
           </div>
-        </GlassPanel>
-      </div>
+          <div className="flex flex-wrap gap-2">
+            <input
+              className="focus-field min-w-44 border-white/30 bg-white/95"
+              placeholder="Search by title"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <select
+              className="focus-field min-w-36 border-white/30 bg-white/95"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="ALL">All statuses</option>
+              <option value="DRAFT">Draft</option>
+              <option value="PUBLISHED">Published</option>
+            </select>
+            <NeonButton onClick={() => navigate("/events/create")}>
+              Create Event
+            </NeonButton>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-200">
+          {loading ? (
+            <div className="p-4 text-sm text-slate-500">Loading events...</div>
+          ) : null}
+
+          {!loading && !filtered.length ? (
+            <div className="p-4 text-sm text-slate-500">
+              No events found for the selected filters.
+            </div>
+          ) : null}
+
+          {!loading
+            ? filtered.map((event) => {
+                const isOwner = event.organizerId === user?.id;
+                const canPublish =
+                  (user?.role === "admin" || isOwner) &&
+                  event.status !== "PUBLISHED";
+                const canRegister = event.status === "PUBLISHED";
+
+                return (
+                  <div
+                    key={event.id}
+                    className="m-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between"
+                  >
+                    <div>
+                      <p className="text-base font-semibold text-slate-900">
+                        {event.title}
+                      </p>
+                      <p className="subtle-text mt-1">
+                        {new Date(event.eventDate).toLocaleString()} •{" "}
+                        {event.location}
+                      </p>
+                      <p className="subtle-text mt-1">
+                        Capacity {event.capacity} • Registered{" "}
+                        {event.participantIds?.length || 0}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`status-chip ${event.status === "PUBLISHED" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                      >
+                        {event.status || "DRAFT"}
+                      </span>
+
+                      {canPublish ? (
+                        <NeonButton
+                          variant="secondary"
+                          onClick={() => onPublish(event.id)}
+                        >
+                          Publish
+                        </NeonButton>
+                      ) : null}
+
+                      {canRegister ? (
+                        <NeonButton onClick={() => onRegister(event.id)}>
+                          Register
+                        </NeonButton>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })
+            : null}
+        </div>
+      </GlassPanel>
     </section>
   );
 }

@@ -2,11 +2,21 @@ server:
   port: ${PORT:8081}
 
 spring:
+  application:
+    name: event-service
   data:
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost:27017/event_db}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:}
+      sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG:}
+      ssl.endpoint.identification.algorithm: ${KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM:https}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 management:
   endpoints:
@@ -17,3 +27,15 @@ management:
 app:
   auth-service-url: ${AUTH_SERVICE_URL:http://localhost:4001}
   cors-origin: ${CORS_ORIGIN:http://localhost:5173}
+  kafka:
+    topics:
+      event-created: ${EVENT_CREATED_TOPIC:event-created}
+      event-registration: ${EVENT_REGISTRATION_TOPIC:event-registration}
+  rate-limit:
+    max-requests: ${RATE_LIMIT_MAX_REQUESTS:120}
+    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
+
+logging:
+  level:
+    root: INFO
+    com.eventiq.eventservice: INFO

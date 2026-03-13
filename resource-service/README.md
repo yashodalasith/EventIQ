@@ -57,3 +57,11 @@ FastAPI microservice for resource inventory, scheduling, and event-linked alloca
 
 - Resource allocation calls Event Service over REST to verify the target event exists
 - Kafka publishes `resource-allocation` messages for Notification Service and downstream consumers
+
+## Azure Event Hubs Notes
+
+- This service already works with Azure Event Hubs Kafka endpoint through environment variables only.
+- Set `KAFKA_BOOTSTRAP_SERVERS` to `<namespace>.servicebus.windows.net:9093`.
+- Set `KAFKA_SECURITY_PROTOCOL=SASL_SSL`, `KAFKA_SASL_MECHANISM=PLAIN`, `KAFKA_SASL_USERNAME=$ConnectionString`, and `KAFKA_SASL_PASSWORD=<Event Hubs connection string>`.
+- Leave `KAFKA_SSL_CAFILE` empty unless your runtime needs a custom CA certificate bundle.
+- Create the `resource-allocation` Event Hub before publishing.

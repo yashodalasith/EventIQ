@@ -45,3 +45,11 @@ Node.js microservice for email notifications and Kafka consumption.
 - `event-registration`: sends registration confirmation email to `participantEmail`
 - `event-created`: sends organizer notification if recipient email is present or fallback email configured
 - `resource-allocation`: stores event and sends fallback email if configured
+
+## Azure Event Hubs Notes
+
+- This service already works with Azure Event Hubs Kafka endpoint through environment variables only.
+- Set `KAFKA_BROKERS` to `<namespace>.servicebus.windows.net:9093`.
+- Set `KAFKA_SECURITY_PROTOCOL=SASL_SSL`, `KAFKA_SASL_MECHANISM=plain`, `KAFKA_SASL_USERNAME=$ConnectionString`, and `KAFKA_SASL_PASSWORD=<Event Hubs connection string>`.
+- Use a consumer group that exists in Event Hubs, for example `KAFKA_GROUP_ID=$Default`.
+- Create Event Hubs named `event-created`, `event-registration`, and `resource-allocation` before starting the consumer.

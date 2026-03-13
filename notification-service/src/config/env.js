@@ -8,6 +8,14 @@ export const env = {
   mongoUri:
     process.env.MONGO_URI || "mongodb://localhost:27017/notification_db",
   kafkaBrokers: (process.env.KAFKA_BROKERS || "localhost:9092").split(","),
+  kafkaSecurityProtocol: process.env.KAFKA_SECURITY_PROTOCOL || "PLAINTEXT",
+  kafkaSaslMechanism: (
+    process.env.KAFKA_SASL_MECHANISM || "plain"
+  ).toLowerCase(),
+  kafkaSaslUsername: process.env.KAFKA_SASL_USERNAME || "",
+  kafkaSaslPassword: process.env.KAFKA_SASL_PASSWORD || "",
+  kafkaSslRejectUnauthorized:
+    (process.env.KAFKA_SSL_REJECT_UNAUTHORIZED || "true") === "true",
   kafkaGroupId: process.env.KAFKA_GROUP_ID || "notification-group",
   eventCreatedTopic: process.env.EVENT_CREATED_TOPIC || "event-created",
   eventRegistrationTopic:

@@ -31,6 +31,18 @@ class Settings:
             "KAFKA_BOOTSTRAP_SERVERS",
             "localhost:9092",
         )
+        self.kafka_security_protocol = os.getenv(
+            "KAFKA_SECURITY_PROTOCOL",
+            "PLAINTEXT",
+        ).upper()
+        self.kafka_sasl_mechanism = os.getenv("KAFKA_SASL_MECHANISM", "")
+        self.kafka_sasl_username = os.getenv("KAFKA_SASL_USERNAME", "")
+        self.kafka_sasl_password = os.getenv("KAFKA_SASL_PASSWORD", "")
+        self.kafka_ssl_cafile = os.getenv("KAFKA_SSL_CAFILE", "")
+        self.kafka_ssl_check_hostname = _parse_bool(
+            os.getenv("KAFKA_SSL_CHECK_HOSTNAME"),
+            True,
+        )
         self.kafka_resource_allocation_topic = os.getenv(
             "KAFKA_RESOURCE_ALLOCATION_TOPIC",
             "resource-allocation",

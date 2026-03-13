@@ -52,3 +52,11 @@ Spring Boot microservice for event management.
 - Kafka topic emits:
   - `event-created`
   - `event-registration`
+
+## Azure Event Hubs Notes
+
+- This service already works with Azure Event Hubs Kafka endpoint through environment variables only.
+- Set `KAFKA_BOOTSTRAP_SERVERS` to `<namespace>.servicebus.windows.net:9093`.
+- Set `KAFKA_SECURITY_PROTOCOL=SASL_SSL` and `KAFKA_SASL_MECHANISM=PLAIN`.
+- Set `KAFKA_SASL_JAAS_CONFIG` using username `$ConnectionString` and the Event Hubs connection string as the password value.
+- Create Event Hubs named `event-created` and `event-registration` before publishing.

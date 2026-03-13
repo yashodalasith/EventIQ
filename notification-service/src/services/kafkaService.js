@@ -5,7 +5,24 @@ import { Notification } from "../models/Notification.js";
 import { sendEmail } from "./emailService.js";
 import { buildTopicNotification } from "./templateService.js";
 
-const kafka = new Kafka({ brokers: env.kafkaBrokers });
+const kafkaConfig = {
+  brokers: env.kafkaBrokers,
+};
+
+if (env.kafkaSecurityProtocol.toUpperCase() === "SSL") {
+  kafkaConfig.ssl = { rejectUnauthorized: env.kafkaSslRejectUnauthorized };
+}
+
+if (env.kafkaSecurityProtocol.toUpperCase() === "SASL_SSL") {
+  kafkaConfig.ssl = { rejectUnauthorized: env.kafkaSslRejectUnauthorized };
+  kafkaConfig.sasl = {
+    mechanism: env.kafkaSaslMechanism,
+    username: env.kafkaSaslUsername,
+    password: env.kafkaSaslPassword,
+  };
+}
+
+const kafka = new Kafka(kafkaConfig);
 const consumer = kafka.consumer({ groupId: env.kafkaGroupId });
 let kafkaConnected = false;
 let isStarting = false;

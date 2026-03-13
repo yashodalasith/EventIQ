@@ -28,6 +28,8 @@ jobs:
       backend_any: ${{ steps.filter.outputs.backend_any }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -50,6 +52,15 @@ jobs:
               - 'notification-service/**'
               - 'resource-service/**'
               - 'event-service/**'
+      - name: Debug detected changes
+        run: |
+          echo "auth=${{ steps.filter.outputs.auth }}"
+          echo "notification=${{ steps.filter.outputs.notification }}"
+          echo "frontend=${{ steps.filter.outputs.frontend }}"
+          echo "resource=${{ steps.filter.outputs.resource }}"
+          echo "event=${{ steps.filter.outputs.event }}"
+          echo "compose=${{ steps.filter.outputs.compose }}"
+          echo "backend_any=${{ steps.filter.outputs.backend_any }}"
 
   build-auth:
     runs-on: ubuntu-latest

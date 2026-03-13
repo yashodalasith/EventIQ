@@ -167,7 +167,7 @@ jobs:
 
   docker-smoke:
     runs-on: ubuntu-latest
-    if: needs.detect-changes.outputs.compose == 'true' || needs.detect-changes.outputs.backend_any == 'true'
+    if: ${{ always() && (needs.detect-changes.outputs.compose == 'true' || needs.detect-changes.outputs.backend_any == 'true') }}
     needs:
       [
         detect-changes,

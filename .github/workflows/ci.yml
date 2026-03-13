@@ -19,18 +19,19 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      auth: ${{ steps.filter.outputs.auth }}
-      notification: ${{ steps.filter.outputs.notification }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      resource: ${{ steps.filter.outputs.resource }}
-      event: ${{ steps.filter.outputs.event }}
-      compose: ${{ steps.filter.outputs.compose }}
-      backend_any: ${{ steps.filter.outputs.backend_any }}
+      auth: ${{ steps.filter_pr.outputs.auth || steps.filter_push.outputs.auth }}
+      notification: ${{ steps.filter_pr.outputs.notification || steps.filter_push.outputs.notification }}
+      frontend: ${{ steps.filter_pr.outputs.frontend || steps.filter_push.outputs.frontend }}
+      resource: ${{ steps.filter_pr.outputs.resource || steps.filter_push.outputs.resource }}
+      event: ${{ steps.filter_pr.outputs.event || steps.filter_push.outputs.event }}
+      compose: ${{ steps.filter_pr.outputs.compose || steps.filter_push.outputs.compose }}
+      backend_any: ${{ steps.filter_pr.outputs.backend_any || steps.filter_push.outputs.backend_any }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - id: filter
+      - id: filter_pr
+        if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@v3
         with:
           filters: |
@@ -52,15 +53,40 @@ jobs:
               - 'notification-service/**'
               - 'resource-service/**'
               - 'event-service/**'
+      - id: filter_push
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || 'origin/dev' }}
+          ref: ${{ github.sha }}
+          filters: |
+            auth:
+              - 'auth-service/**'
+            notification:
+              - 'notification-service/**'
+            frontend:
+              - 'frontend/**'
+            resource:
+              - 'resource-service/**'
+            event:
+              - 'event-service/**'
+            compose:
+              - 'docker-compose.yml'
+              - '.github/workflows/ci.yml'
+            backend_any:
+              - 'auth-service/**'
+              - 'notification-service/**'
+              - 'resource-service/**'
+              - 'event-service/**'
       - name: Debug detected changes
         run: |
-          echo "auth=${{ steps.filter.outputs.auth }}"
-          echo "notification=${{ steps.filter.outputs.notification }}"
-          echo "frontend=${{ steps.filter.outputs.frontend }}"
-          echo "resource=${{ steps.filter.outputs.resource }}"
-          echo "event=${{ steps.filter.outputs.event }}"
-          echo "compose=${{ steps.filter.outputs.compose }}"
-          echo "backend_any=${{ steps.filter.outputs.backend_any }}"
+          echo "auth=${{ steps.filter_pr.outputs.auth || steps.filter_push.outputs.auth }}"
+          echo "notification=${{ steps.filter_pr.outputs.notification || steps.filter_push.outputs.notification }}"
+          echo "frontend=${{ steps.filter_pr.outputs.frontend || steps.filter_push.outputs.frontend }}"
+          echo "resource=${{ steps.filter_pr.outputs.resource || steps.filter_push.outputs.resource }}"
+          echo "event=${{ steps.filter_pr.outputs.event || steps.filter_push.outputs.event }}"
+          echo "compose=${{ steps.filter_pr.outputs.compose || steps.filter_push.outputs.compose }}"
+          echo "backend_any=${{ steps.filter_pr.outputs.backend_any || steps.filter_push.outputs.backend_any }}"
 
   build-auth:
     runs-on: ubuntu-latest

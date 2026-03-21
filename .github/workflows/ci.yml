@@ -11,6 +11,7 @@ on:
         feature-events,
         feature-resources,
         feature-notifications,
+        feature/mobile-responsive-ui,
       ]
   pull_request:
     branches: [main, dev, release/v1.0]

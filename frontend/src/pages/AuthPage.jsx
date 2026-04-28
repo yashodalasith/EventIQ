@@ -234,7 +234,7 @@ export default function AuthPage() {
                       setErrorItems([]);
                       setInvalidFields([]);
                     }}
-                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition ${mode === "login" ? "bg-blue-700 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}
+                    className={`flex h-full w-36 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition ${mode === "login" ? "bg-red-700 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}
                   >
                     Login
                   </button>
